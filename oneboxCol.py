@@ -77,7 +77,7 @@ class oneboxColMDP:
         # Tb = beliefTransitionMatrix(gamma, epsilon, nq, eta)
         # belief transition matrix
 
-        self.Trans_belief_obs, self.Obs_emis_trans, self.den = beliefTransitionMatrixGaussianCol(gamma, epsilon, qmin, qmax, NumCol, self.nq)
+        self.Trans_belief_obs, self.Obs_emis_trans, self.den = beliefTransitionMatrixGaussianCol(gamma, epsilon, qmin, qmax, Ncol, self.nq)
         self.Trans_hybrid_obs = np.zeros(((NumCol, self.n , self.n )))
         for i in range(NumCol):
             self.Trans_hybrid_obs[i] = kronn(Tr, self.Trans_belief_obs[i]).T
