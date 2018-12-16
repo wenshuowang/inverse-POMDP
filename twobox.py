@@ -267,6 +267,19 @@ class twoboxMDPdata(twoboxMDP):
                     if self.action[n, t - 1] == pb:  # press button
                         self.location[n, t] = self.location[n, t - 1]  # pressing button does not change location
 
+                        #### for pb action, wait for usual time and then pb  #############
+                        if self.trueState1[n, t - 1] == 0:
+                            self.trueState1[n, t - 1] = np.random.binomial(1, gamma1)
+                        else:
+                            self.trueState1[n, t - 1] = 1 - np.random.binomial(1, epsilon1)
+
+                        if self.trueState2[n, t - 1] == 0:
+                            self.trueState2[n, t - 1] = np.random.binomial(1, gamma2)
+                        else:
+                            self.trueState2[n, t - 1] = 1 - np.random.binomial(1, epsilon2)
+                        #### for pb action, wait for usual time and then pb  #############
+
+
                         if self.location[n, t] == 1:  # consider location 1 case
                             self.belief2[n, t] = np.argmax(np.random.multinomial(1, Tb2[:, self.belief2[n, t - 1]], size=1))
                             # belief on box 2 is independent on box 1
@@ -401,6 +414,18 @@ class twoboxMDPdata(twoboxMDP):
 
                     if self.action[n, t - 1] == pb:  # press button
                         self.location[n, t] = self.location[n, t - 1]  # pressing button does not change location
+
+                        #### for pb action, wait for usual time and then pb  #############
+                        if self.trueState1[n, t - 1] == 0:
+                            self.trueState1[n, t - 1] = np.random.binomial(1, gamma1)
+                        else:
+                            self.trueState1[n, t - 1] = 1 - np.random.binomial(1, epsilon1)
+
+                        if self.trueState2[n, t - 1] == 0:
+                            self.trueState2[n, t - 1] = np.random.binomial(1, gamma2)
+                        else:
+                            self.trueState2[n, t - 1] = 1 - np.random.binomial(1, epsilon2)
+                        #### for pb action, wait for usual time and then pb  #############
 
                         if self.location[n, t] == 1:  # consider location 1 case
                             self.belief2[n, t] = np.argmax(np.random.multinomial(1, Tb2[:, self.belief2[n, t - 1]], size=1))
