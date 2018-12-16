@@ -22,7 +22,7 @@ g1 = 2    # g1 = go toward box 1 (via location 0 if from 2)
 g2 = 3    # g2 = go toward box 2 (via location 0 if from 1)
 pb = 4    # pb  = push button
 sigmaTb = 0.01  #0.1    # variance for the gaussian approximation in belief transition matrix
-#temperatureQ = 0.01  #(0.1 for Neda, others usually 0.2) #0.2  # temperature for soft policy based on Q value
+temperatureQ = 0.2  #(0.1 for Neda, others usually 0.2) #0.2  # temperature for soft policy based on Q value
 
 class twoboxMDP:
     def __init__(self, discount, nq, nr, na, nl, parameters):

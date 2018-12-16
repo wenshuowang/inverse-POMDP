@@ -1,7 +1,7 @@
 from twobox import *
 from HMMtwobox import *
 import pickle
-import logger
+#import logger
 import sys
 from datetime import datetime
 import os
