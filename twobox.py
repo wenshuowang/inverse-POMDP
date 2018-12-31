@@ -21,7 +21,7 @@ g0 = 1    # g0 = go to location 0
 g1 = 2    # g1 = go toward box 1 (via location 0 if from 2)
 g2 = 3    # g2 = go toward box 2 (via location 0 if from 1)
 pb = 4    # pb  = push button
-sigmaTb = 0.01  #0.1    # variance for the gaussian approximation in belief transition matrix
+sigmaTb = 0.1  #0.1    # variance for the gaussian approximation in belief transition matrix
 temperatureQ = 0.2  #(0.1 for Neda, others usually 0.2) #0.2  # temperature for soft policy based on Q value
 
 class twoboxMDP:
@@ -416,15 +416,15 @@ class twoboxMDPdata(twoboxMDP):
                         self.location[n, t] = self.location[n, t - 1]  # pressing button does not change location
 
                         #### for pb action, wait for usual time and then pb  #############
-                        if self.trueState1[n, t - 1] == 0:
-                            self.trueState1[n, t - 1] = np.random.binomial(1, gamma1)
-                        else:
-                            self.trueState1[n, t - 1] = 1 - np.random.binomial(1, epsilon1)
-
-                        if self.trueState2[n, t - 1] == 0:
-                            self.trueState2[n, t - 1] = np.random.binomial(1, gamma2)
-                        else:
-                            self.trueState2[n, t - 1] = 1 - np.random.binomial(1, epsilon2)
+                        # if self.trueState1[n, t - 1] == 0:
+                        #     self.trueState1[n, t - 1] = np.random.binomial(1, gamma1)
+                        # else:
+                        #     self.trueState1[n, t - 1] = 1 - np.random.binomial(1, epsilon1)
+                        #
+                        # if self.trueState2[n, t - 1] == 0:
+                        #     self.trueState2[n, t - 1] = np.random.binomial(1, gamma2)
+                        # else:
+                        #     self.trueState2[n, t - 1] = 1 - np.random.binomial(1, epsilon2)
                         #### for pb action, wait for usual time and then pb  #############
 
                         if self.location[n, t] == 1:  # consider location 1 case
