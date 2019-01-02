@@ -30,6 +30,7 @@ class HMMoneboxCol:
 
         alpha = np.zeros((self.S, T))   # initialize alpha value for each belief value
         alpha[:, 0] = self.pi * self.B[act[0], self._states(rew[0])]
+        belief_vector = np.array([np.arange(0, 1  ,1/self.S) + 1/self.S/2, 1 - np.arange(0, 1  ,1/self.S) - 1/self.S/2])
 
         for t in range(1, T):
             if act[t - 1] == 1 and col[t] == self.Ncol:
@@ -39,10 +40,8 @@ class HMMoneboxCol:
                 #else:
                 #    alpha[:, t] = 0
             else:
-                alpha[:,  t] = np.dot(alpha[:, t - 1] * (self.D[col[t]].dot(
-                    np.array([np.arange(0, 1  ,1/self.S) + 1/self.S/2, 1 - np.arange(0, 1  ,1/self.S) - 1/self.S/2])))
-                                      , self.C[col[t]][
-                    np.ix_(self._states(rew[t-1]), self._states(rew[t]))]) \
+                alpha[:,  t] = np.dot(alpha[:, t - 1] * (self.D[col[t]].dot(belief_vector)),
+                                      self.C[col[t]][np.ix_(self._states(rew[t-1]), self._states(rew[t]))]) \
                            * self.B[act[t], self._states(rew[t])]
         return alpha
 
