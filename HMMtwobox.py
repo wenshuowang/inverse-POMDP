@@ -206,42 +206,42 @@ class HMMtwobox:
 
         return Qaux
 
-    def computeQauxDE(self, obs, Anew, Bnew, Anewde, Bnewde):
-
-        T = obs.shape[0]  # length of a sample sequence
-
-        act = obs[:, 0]  # 0: doing nothing; 1: press button
-        rew = obs[:, 1]  # 0 : not have; 1: have
-        loc = obs[:, 2]  # location, three possible values
-
-        # alpha = self.forward(obs)
-        # beta = self.backward(obs)
-        alpha, scale = self.forward_scale(obs)
-        beta = self.backward_scale(obs, scale)
-
-        gamma = self.compute_gamma(alpha, beta)
-        xi = self.compute_xi(alpha, beta, obs)
-        dQaux1 = np.sum(np.log(self.pi) * gamma[:, 0])
-        dQaux2 = 0
-        dQaux3 = 0
-
-        for t in range(T - 1):
-            # Qaux2 += np.sum(np.log(10 ** -13 + Anew[act[t]][
-            #   np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]) * xi[t, :, :])
-
-            Aelement = Anew[act[t]][np.ix_(self._states(rew[t],loc[t]), self._states(rew[t + 1],loc[t+1]))]
-            Aelement_prime = Aelement + 1 * (Aelement == 0)
-            dQaux2_ins = Anewde[act[t]][np.ix_(self._states(rew[t],loc[t]), self._states(rew[t + 1],loc[t+1]))
-                         ] / (Aelement_prime) * (Aelement != 0) * xi[t, :, :]
-            dQaux2 += np.sum(dQaux2_ins)
-
-
-            Belement = Bnew[act[t], self._states(rew[t], loc[t])]
-            Belement_prime = Belement + 1 * (Belement == 0)
-            dQaux3_ins = Bnewde[act[t], self._states(rew[t], loc[t])] / Belement_prime * \
-                         (Belement != 0) * gamma[:, t]
-            dQaux3 += np.sum(dQaux3_ins)
-
-            dQaux = dQaux1 + dQaux2 + dQaux3
-
-        return dQaux
+    # def computeQauxDE(self, obs, Anew, Bnew, Anewde, Bnewde):
+    #
+    #     T = obs.shape[0]  # length of a sample sequence
+    #
+    #     act = obs[:, 0]  # 0: doing nothing; 1: press button
+    #     rew = obs[:, 1]  # 0 : not have; 1: have
+    #     loc = obs[:, 2]  # location, three possible values
+    #
+    #     # alpha = self.forward(obs)
+    #     # beta = self.backward(obs)
+    #     alpha, scale = self.forward_scale(obs)
+    #     beta = self.backward_scale(obs, scale)
+    #
+    #     gamma = self.compute_gamma(alpha, beta)
+    #     xi = self.compute_xi(alpha, beta, obs)
+    #     dQaux1 = np.sum(np.log(self.pi) * gamma[:, 0])
+    #     dQaux2 = 0
+    #     dQaux3 = 0
+    #
+    #     for t in range(T - 1):
+    #         # Qaux2 += np.sum(np.log(10 ** -13 + Anew[act[t]][
+    #         #   np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]) * xi[t, :, :])
+    #
+    #         Aelement = Anew[act[t]][np.ix_(self._states(rew[t],loc[t]), self._states(rew[t + 1],loc[t+1]))]
+    #         Aelement_prime = Aelement + 1 * (Aelement == 0)
+    #         dQaux2_ins = Anewde[act[t]][np.ix_(self._states(rew[t],loc[t]), self._states(rew[t + 1],loc[t+1]))
+    #                      ] / (Aelement_prime) * (Aelement != 0) * xi[t, :, :]
+    #         dQaux2 += np.sum(dQaux2_ins)
+    #
+    #
+    #         Belement = Bnew[act[t], self._states(rew[t], loc[t])]
+    #         Belement_prime = Belement + 1 * (Belement == 0)
+    #         dQaux3_ins = Bnewde[act[t], self._states(rew[t], loc[t])] / Belement_prime * \
+    #                      (Belement != 0) * gamma[:, t]
+    #         dQaux3 += np.sum(dQaux3_ins)
+    #
+    #         dQaux = dQaux1 + dQaux2 + dQaux3
+    #
+    #     return dQaux
