@@ -61,6 +61,9 @@ class HMMoneboxCol:
         scale[0] = np.sum(alpha[:, 0])
         alpha[:, 0] = alpha[:, 0] / scale[0]
 
+        belief_vector = np.array(
+            [np.arange(0, 1, 1 / self.S) + 1 / self.S / 2, 1 - np.arange(0, 1, 1 / self.S) - 1 / self.S / 2])
+
         for t in range(1, T):
             #print(t)
             if act[t - 1] == 1 and col[t] == self.Ncol:
@@ -70,10 +73,8 @@ class HMMoneboxCol:
                 #else:
                 #    alpha[:, t] = 0
             else:
-                alpha[:,  t] = np.dot(alpha[:, t - 1] * (self.D[col[t]].dot(
-                    np.array([np.arange(0, 1  ,1/self.S) + 1/self.S/2, 1 - np.arange(0, 1  ,1/self.S) - 1/self.S/2])))
-                                      , self.C[col[t]][
-                    np.ix_(self._states(rew[t-1]), self._states(rew[t]))]) \
+                alpha[:,  t] = np.dot(alpha[:, t - 1] * (self.D[col[t]].dot(belief_vector)),
+                                      self.C[col[t]][np.ix_(self._states(rew[t-1]), self._states(rew[t]))]) \
                            * self.B[act[t], self._states(rew[t])]
             scale[t] = np.sum(alpha[:, t])
             alpha[:, t] = alpha[:, t] / scale[t]
@@ -95,6 +96,10 @@ class HMMoneboxCol:
 
         beta = np.zeros((self.S, T))
         beta[:, -1] = 1
+
+        belief_vector = np.array(
+            [np.arange(0, 1, 1 / self.S) + 1 / self.S / 2, 1 - np.arange(0, 1, 1 / self.S) - 1 / self.S / 2])
+
         for t in reversed(range(T - 1)):
             if act[t] == 1 and col[t+1] == self.Ncol:
                 beta[:, t] = np.dot(self.A[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t+1]))],
@@ -103,8 +108,7 @@ class HMMoneboxCol:
                 #    beta[:,t] = 0
             else:
                 beta[:, t] = np.dot(self.C[col[t+1]][np.ix_(self._states(rew[t]), self._states(rew[t+1]))],
-                                    beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]) * (self.D[col[t + 1]].dot(
-                    np.array([np.arange(0, 1  ,1/self.S) + 1/self.S/2, 1 - np.arange(0, 1  ,1/self.S) - 1/self.S/2])))
+                                    beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]) * (self.D[col[t + 1]].dot(belief_vector))
 
         return beta
 
@@ -119,6 +123,8 @@ class HMMoneboxCol:
         beta = np.zeros((self.S, T))
         beta[:, T - 1] = 1
         #beta[:, T - 1] = beta[:, T - 1] / scale[T - 1]
+        belief_vector = np.array(
+            [np.arange(0, 1, 1 / self.S) + 1 / self.S / 2, 1 - np.arange(0, 1, 1 / self.S) - 1 / self.S / 2])
 
         for t in reversed(range(T - 1)):
             if act[t] == 1 and col[t+1] == self.Ncol:
@@ -128,8 +134,7 @@ class HMMoneboxCol:
                 #    beta[:,t] = 0
             else:
                 beta[:, t] = np.dot(self.C[col[t+1]][np.ix_(self._states(rew[t]), self._states(rew[t+1]))],
-                                    beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]) * (self.D[col[t + 1]].dot(
-                    np.array([np.arange(0, 1  ,1/self.S) + 1/self.S/2, 1 - np.arange(0, 1  ,1/self.S) - 1/self.S/2])))
+                                    beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]) * (self.D[col[t + 1]].dot(belief_vector))
             beta[:, t] = beta[:, t] / scale[t + 1]
 
         return beta
@@ -154,13 +159,15 @@ class HMMoneboxCol:
 
         xi = np.zeros((T - 1, self.S, self.S))
 
+        belief_vector = np.array(
+            [np.arange(0, 1, 1 / self.S) + 1 / self.S / 2, 1 - np.arange(0, 1, 1 / self.S) - 1 / self.S / 2])
+
         for t in range(T - 1):
             if act[t] == 1 and col[t + 1] == self.Ncol:
                 xi[t, :, :] = np.diag(alpha[:, t]).dot(self.A[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]
                                                    ).dot(np.diag(beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]))
             else:
-                xi[t, :, :] = np.diag(alpha[:, t] * (self.D[col[t + 1]].dot(
-                    np.array([np.arange(0, 1  ,1/self.S) + 1/self.S/2, 1 - np.arange(0, 1  ,1/self.S) - 1/self.S/2])))).dot(
+                xi[t, :, :] = np.diag(alpha[:, t] * (self.D[col[t + 1]].dot(belief_vector))).dot(
                     self.C[col[t+1]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]
                                                    ).dot(np.diag(beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]))
 
@@ -183,12 +190,14 @@ class HMMoneboxCol:
         alpha_scaled, _ = self.forward_scale(obs)
         Hpath[:, 0] = 0
 
+        belief_vector = np.array(
+            [np.arange(0, 1, 1 / self.S) + 1 / self.S / 2, 1 - np.arange(0, 1, 1 / self.S) - 1 / self.S / 2])
+
         for t in range(1, T):
             if act[t - 1] == 1 and col[t] == self.Ncol:
                 lat_cond[t - 1] = np.diag(alpha_scaled[:, t - 1]).dot(self.A[act[t - 1]][np.ix_(self._states(rew[t - 1]), self._states(rew[t]))])
             else:
-                lat_cond[t - 1] = np.diag(alpha_scaled[:, t - 1] * (self.D[col[t]].dot(
-                    np.array([np.arange(0, 1  ,1/self.S) + 1/self.S/2, 1 - np.arange(0, 1  ,1/self.S) - 1/self.S/2])))
+                lat_cond[t - 1] = np.diag(alpha_scaled[:, t - 1] * (self.D[col[t]].dot(belief_vector))
                                           ).dot(self.C[col[t]][np.ix_(self._states(rew[t - 1]), self._states(rew[t]))])
 
             lat_cond[t - 1] = lat_cond[t - 1] / (np.sum(lat_cond[t - 1], axis = 0) + 1 * (np.sum(lat_cond[t - 1], axis = 0) == 0))
