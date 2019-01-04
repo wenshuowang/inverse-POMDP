@@ -1,8 +1,8 @@
 from __future__ import division
 from boxtask_func import *
-from HMMtwobox import *
+#from HMMtwobox import *
 from MDPclass import *
-
+from HMMtwoboxCol import *
 import numpy.matlib
 from scipy.linalg import block_diag
 from numpy.linalg import inv
@@ -156,6 +156,15 @@ class twoboxColMDP:
         for i in range(self.na):
             self.ThA[i, :, :] = self.ThA[i, :, :].T
 
+        self.Trans_hybrid_obs12 = np.zeros(((NumCol, NumCol, self.na, self.n, self.n)))
+        for i in range(NumCol):
+            for j in range(NumCol):
+                self.Trans_hybrid_obs12[i, j, a0, :, :] = kronn(np.identity(self.nl),
+                                                             self.Trans_belief_obs1[i], Tr, self.Trans_belief_obs2[j]).T
+                self.Trans_hybrid_obs12[i, j, g0, :, :] = kronn(Tl0, self.Trans_belief_obs1[i], Tr, self.Trans_belief_obs2[j]).T
+                self.Trans_hybrid_obs12[i, j, g1, :, :] = kronn(Tl1, self.Trans_belief_obs1[i], Tr, self.Trans_belief_obs2[j]).T
+                self.Trans_hybrid_obs12[i, j, g2, :, :] = kronn(Tl2, self.Trans_belief_obs1[i], Tr, self.Trans_belief_obs2[j]).T
+
 
     def solveMDP_op(self, epsilon = 0.001, niterations = 10000, initial_value=0):
         vi = ValueIteration_opZW(self.ThA, self.R, self.discount, epsilon, niterations, initial_value)
@@ -293,20 +302,21 @@ class twoboxColMDPdata(twoboxColMDP):
                         else:
                             self.reward[n, t] = np.random.binomial(1, 1 - rho)
 
-
+                        if self.action[n, t - 1] == a0:
+                            self.location[n, t] = self.location[n, t - 1]
                         if self.action[n, t - 1] == g0:
                             Tl0 = np.array(
                                 [[1, 1 - delta, 1 - delta], [0, delta, 0],
                                  [0, 0, delta]])  # go to loc 0 (with error of delta)
-                            self.location[n, t] = np.random.multinomial(1, Tl0[:, self.location[n, t-1]])
+                            self.location[n, t] = np.argmax(np.random.multinomial(1, Tl0[:, self.location[n, t-1]], size  = 1))
                         if self.action[n, t - 1] == g1:
                             Tl1 = np.array([[delta, 0, 1 - delta - direct], [1 - delta, 1, direct],
                                             [0, 0, delta]])  # go to box 1 (with error of delta)
-                            self.location[n, t] = np.random.multinomial(1, Tl1[:, self.location[n, t - 1]])
+                            self.location[n, t] = np.argmax(np.random.multinomial(1, Tl1[:, self.location[n, t - 1]], size  = 1))
                         if self.action[n, t - 1] == g2:
                             Tl2 = np.array([[delta, 1 - delta - direct, 0], [0, delta, 0],
                                             [1 - delta, direct, 1]])  # go to box 2 (with error of delta)
-                            self.location[n, t] = np.random.multinomial(1, Tl2[:, self.location[n, t - 1]])
+                            self.location[n, t] = np.argmax(np.random.multinomial(1, Tl2[:, self.location[n, t - 1]], size  = 1))
 
 
                     if self.action[n, t - 1] == pb:  # press button
@@ -479,20 +489,21 @@ class twoboxColMDPdata(twoboxColMDP):
                         else:
                             self.reward[n, t] = np.random.binomial(1, 1 - rho)
 
-
+                        if self.action[n, t - 1] == a0:
+                            self.location[n, t] = self.location[n, t - 1]
                         if self.action[n, t - 1] == g0:
                             Tl0 = np.array(
                                 [[1, 1 - delta, 1 - delta], [0, delta, 0],
                                  [0, 0, delta]])  # go to loc 0 (with error of delta)
-                            self.location[n, t] = np.random.multinomial(1, Tl0[:, self.location[n, t-1]])
+                            self.location[n, t] = np.argmax(np.random.multinomial(1, Tl0[:, self.location[n, t-1]], size  = 1))
                         if self.action[n, t - 1] == g1:
                             Tl1 = np.array([[delta, 0, 1 - delta - direct], [1 - delta, 1, direct],
                                             [0, 0, delta]])  # go to box 1 (with error of delta)
-                            self.location[n, t] = np.random.multinomial(1, Tl1[:, self.location[n, t - 1]])
+                            self.location[n, t] = np.argmax(np.random.multinomial(1, Tl1[:, self.location[n, t - 1]], size  = 1))
                         if self.action[n, t - 1] == g2:
                             Tl2 = np.array([[delta, 1 - delta - direct, 0], [0, delta, 0],
                                             [1 - delta, direct, 1]])  # go to box 2 (with error of delta)
-                            self.location[n, t] = np.random.multinomial(1, Tl2[:, self.location[n, t - 1]])
+                            self.location[n, t] = np.argmax(np.random.multinomial(1, Tl2[:, self.location[n, t - 1]], size  = 1))
 
 
                     if self.action[n, t - 1] == pb:  # press button
@@ -594,7 +605,10 @@ class twoboxColMDPder(twoboxColMDP):
 
     def dQauxdpara_sim(self, obs, para_new):
         pi  = np.ones(self.nq * self.nq) / self.nq / self.nq
-        twoboxHMM = HMMtwobox(self.ThA, self.softpolicy, pi)
+        twoboxColHMM = HMMtwoboxCol(self.ThA, self.softpolicy,
+                                    self.Trans_hybrid_obs12, self.Obs_emis_trans1,
+                                    self.Obs_emis_trans2, pi,
+                                    Ncol=np.rint(self.parameters[7]).astype(int) - 1)
 
         perturb = 10 ** -6
 
@@ -635,63 +649,79 @@ class twoboxColMDPder(twoboxColMDP):
         twobox_new = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para_new)
         twobox_new.setupMDP()
         twobox_new.solveMDP_sfm()
-        Qaux = twoboxHMM.computeQaux(obs, twobox_new.ThA, twobox_new.softpolicy)
+        Qaux = twoboxColHMM.computeQaux(obs, twobox_new.ThA, twobox_new.softpolicy, twobox_new.Trans_hybrid_obs12)
 
         para1 = [ gamma1 + perturb, gamma2, epsilon1, epsilon2, Groom,
-                 travelCost, pushButtonCost]
+                 travelCost, pushButtonCost, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
         dQauxdpara_gamma1 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 + perturb, epsilon1, epsilon2, Groom,
-                 travelCost, pushButtonCost]
+                 travelCost, pushButtonCost, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
         dQauxdpara_gamma2 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1+ perturb, epsilon2, Groom,
-                 travelCost, pushButtonCost]
+                 travelCost, pushButtonCost, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
         dQauxdpara_epsilon1 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1, epsilon2+ perturb, Groom,
-                 travelCost, pushButtonCost]
+                 travelCost, pushButtonCost, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
         dQauxdpara_epsilon2 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2, epsilon1, epsilon2, Groom + perturb,
-                 travelCost , pushButtonCost]
+                 travelCost , pushButtonCost, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
         dQauxdpara_Groom = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1, epsilon2, Groom,
-                 travelCost+ perturb, pushButtonCost]
+                 travelCost+ perturb, pushButtonCost, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
         dQauxdpara_travelCost = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1, epsilon2, Groom,
-                 travelCost, pushButtonCost+ perturb]
+                 travelCost, pushButtonCost+ perturb, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
         dQauxdpara_pushButtonCost = (Qaux1 - Qaux) / perturb
 
+        para1 = [gamma1, gamma2 , epsilon1, epsilon2, Groom,
+                 travelCost, pushButtonCost, NumCol, qmin + perturb, qmax]
+        two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
+        two1.setupMDP()
+        two1.solveMDP_sfm()
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        dQauxdpara_qmin = (Qaux1 - Qaux) / perturb
+
+        para1 = [gamma1, gamma2, epsilon1, epsilon2, Groom,
+                 travelCost, pushButtonCost, NumCol, qmin, qmax + perturb]
+        two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
+        two1.setupMDP()
+        two1.solveMDP_sfm()
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        dQauxdpara_qmax = (Qaux1 - Qaux) / perturb
+
         return dQauxdpara_gamma1, dQauxdpara_gamma2, dQauxdpara_epsilon1, dQauxdpara_epsilon2, \
-               dQauxdpara_Groom, dQauxdpara_travelCost, dQauxdpara_pushButtonCost
+               dQauxdpara_Groom, dQauxdpara_travelCost, dQauxdpara_pushButtonCost, 0, dQauxdpara_qmin, dQauxdpara_qmax
