@@ -9,11 +9,11 @@ import os
 import timeit
 #from twoboxMDPsolver import *
 
-E_MAX_ITER = 2  #300       # 100    # maximum number of iterations of E-step
-GD_THRESHOLD = 20 # 0.015   # 0.01      # stopping criteria of M-step (gradient descent)
-E_EPS = 10**-2  #10 ** -8                  # stopping criteria of E-step
+E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
+GD_THRESHOLD = 0.015   # 0.01      # stopping criteria of M-step (gradient descent)
+E_EPS = 10 ** -8                  # stopping criteria of E-step
 M_LR_INI = 2 * 10 ** -5           # initial learning rate in the gradient descent step
-LR_DEC =  1 #4                       # number of times that the learning rate can be reduced
+LR_DEC =  4                       # number of times that the learning rate can be reduced
 
 
 def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
@@ -22,13 +22,6 @@ def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3,
 
 
     print("\nSet the parameters of the model... \n")
-    ### Set all related parameters
-    # discount = 0.99  # temporal discount , used to solve the MDP with value iteration
-    #
-    # nq = 5  # number of belief states per box
-    # nr = 2  # number of reward states
-    # nl = 3  # number of location states
-    # na = 5
 
     beta = 0     # available food dropped back into box after button press
     gamma1 = parameters[0]   # reward becomes available in box 1
@@ -103,14 +96,10 @@ def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3,
                  'pushButtonCost': pushButtonCost
                  }
 
-    # create a file taht saves the parameter dictionary using pickle
+    # create a file that saves the parameter dictionary using pickle
     para_output = open(datestring + '_para_twobox' + '.pkl', 'wb')
     pickle.dump(para_dict, para_output)
     para_output.close()
-
-    # pkl_file1 = open(datestring + '_para_twobox' + '.pkl', 'rb')
-    # para_pkl = pickle.load(pkl_file1)
-    # pkl_file1.close()
 
     print('Data stored in files' )
 
@@ -118,14 +107,13 @@ def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3,
 
 def main():
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
-    parameters_gen = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
+    parameters_gen = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
     #[0.1, 0.1, 0.01, 0.01, 0.05, 0.2, 0.3]
-    obsN, latN, truthN, datestring = twoboxGenerate(parameters_gen, sample_length = 5000, sample_number = 1, nq = 5)
-    sys.stdout = logger.Logger(datestring)  # output will be both on the screen and in the log file
 
-    ## Save the output log
-    #datestring = datetime.strftime(datetime.now(), '%m%d%Y(%H%M)')
-    #sys.stdout = logger.Logger(datestring)  # output will be both on the screen and in the log file
+    obsN, latN, truthN, datestring = twoboxGenerate(parameters_gen, sample_length = 5000, sample_number = 1, nq = 5)
+    #sys.stdout = logger.Logger(datestring)
+    # output will be both on the screen and in the log file
+    # No need to manual interaction to specify parameters in the command line
 
     parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
                           'GD_THRESHOLD': GD_THRESHOLD,
@@ -135,27 +123,18 @@ def main():
                           #'dataSet': sys.argv[1],
                           #'optimizer': sys.argv[2],   # GD: standard gradient descent, PGD: projected GD
                           #'sampleIndex': list(map(int, sys.argv[3].strip('[]').split(','))),
-                          'sampleIndex': sys.argv[1],
                           'ParaInitial': [parameters_gen]
                           #'ParaInitial': [np.array(list(map(float, sys.argv[2].strip('[]').split(','))))]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
-    # ####
-    # # For data set A, GD, 0, [0.2,0.2,0.15,0.15,0.03,0.2,0.3]
-    # ####
-    #
-    # ### Choose the data set that will be used
-    # dataSet = parameterMain_dict['dataSet']
-    # #print("Using data set", dataSet)
-    #
-    # path = os.getcwd()
-    # if dataSet == 'A':
-    #     pkl_file = open(path + '/Data/01042018(2215)_dataN_twobox.pkl', 'rb')
-    #     pkl_file1 = open(path + '/Data/01042018(2215)_para_twobox.pkl', 'rb')
-    # elif dataSet == 'B':
-    #     pkl_file = open(path + '/Data/01062018(2250)_dataN_twobox.pkl', 'rb')
-    #     pkl_file1 = open(path + '/Data/01062018(2250)_para_twobox.pkl', 'rb')
-    #
+
+    ### Choose which sample is used for inference
+    sampleIndex = [0]
+    NN = len(sampleIndex)
+
+     ### Set initial parameter point
+    parameters_iniSet = parameterMain_dict['ParaInitial']
+
     # ### read data from file
     # print("Get data from file...")
     # dataN_pkl = pickle.load(pkl_file)
@@ -166,35 +145,7 @@ def main():
     # truthN = dataN_pkl['trueStates']
     # dataN = dataN_pkl['allData']
 
-    ### Choose which sample is used for inference
-    #T = dataN.shape[1]
-    sampleIndex = [parameterMain_dict['sampleIndex']]   # a list of sample index
-    sampleIndex = [int(ind) for ind in sampleIndex]
-    NN = len(sampleIndex)
-    #print("Using data", dataSet, sampleIndex)
-
-    #N = len(parameterMain_dict['sampleIndex'])
-
-    #if T > dataN.shape[1]:
-    #    sys.exit("The sample length exceeds the largest possible value.")
-    #if N > dataN.shape[0]:
-    #    sys.exit("The sample number exceeds the largest possible value.")
-
-    ### Set initial parameter point
-    '''
-    gamma1_ini = 0.2
-    gamma2_ini = 0.2
-    epsilon1_ini = 0.15
-    epsilon2_ini = 0.15
-    groom_ini = 0.03
-    travelCost_ini = 0.2
-    pushButtonCost_ini = 0.3
-    '''
-    parameters_iniSet = parameterMain_dict['ParaInitial']
-
-
     ### read real para from data file
-    #pkl_file1 = open('para_twobox_01042018(2215).pkl', 'rb')
     pkl_parafile = open(datestring + '_para_twobox' + '.pkl', 'rb')
     para_pkl = pickle.load(pkl_parafile)
     pkl_parafile.close()
@@ -231,7 +182,6 @@ def main():
     NN_MM_log_likelihoods_com_new = []    # old posterior, new parameters
     NN_MM_latent_entropies = []
 
-    NN_likelihoods = []
 
     for nn in range(NN):
 
@@ -239,7 +189,6 @@ def main():
 
         ##############################################################
         # Compute likelihood
-        lat = latN[sampleIndex[nn]]
         obs = obsN[sampleIndex[nn], :, :]
 
         MM = len(parameters_iniSet)
@@ -311,7 +260,6 @@ def main():
                     break
 
                 ##########  M(G)-step ##########
-
                 count_M = 0
                 vinitial = 0
                 para_new_traj.append([])
@@ -341,37 +289,6 @@ def main():
                     # vinitial is value from previous iteration, this is for computational efficiency
                     para_temp = parameters_new + learnrate * np.array(derivative_value[:-1])
                     vinitial = derivative_value[-1]  # value iteration starts with value from previous iteration
-
-                # if parameterMain_dict['optimizer'] == 'GD':
-                #         ## standard gradient descent algorithm
-                #         #start = timeit.timeit()
-                #         derivative_value = twoboxGra.dQauxdpara(obs, parameters_new,
-                #                                                 vinitial)  # vinitial is value from previous iteration, this is for computational efficiency
-                #         #print(timeit.timeit() - start)
-                #         para_temp = parameters_new + learnrate * np.array(derivative_value[:-1])
-                #         vinitial = derivative_value[-1]  # value iteration starts with value from previous iteration
-                #
-                #     elif parameterMain_dict['optimizer'] == 'PGD':
-                #         ## Go the potential next point with PROJECTED gradient descent
-                #         parameters_new_pro = - np.log(1 / parameters_new - 1)  # projected back onto the whole real axis
-                #         sig_deri = np.exp(- parameters_new_pro) / (np.exp(-parameters_new_pro) + 1) ** 2
-                #         start = timeit.timeit()
-                #         derivative_value = twoboxGra.dQauxdpara(obs, parameters_new, vinitial)
-                #         print(timeit.timeit() - start)
-                #         para_temp = parameters_new_pro + learnrate * np.array(derivative_value[:-1]) * sig_deri
-                #         para_temp = 1 / (1 + np.exp(- para_temp))  # projected onto [0,1]
-                #         vinitial = derivative_value[-1]
-
-                    """
-                    #change only part of the parameters
-                    temp = np.copy(para_temp)
-                    para_temp = np.copy(parameters_old)
-                    #para_temp[0] = temp[0]
-                    #para_temp[1] = temp[1]
-                    #para_temp[2] = temp[2]
-                    #para_temp[3] = temp[3]
-                    #para_temp[4] = temp[4]
-                    """
 
                     ## Check the ECDLL (old posterior, new parameters)
                     twobox_new = twoboxMDP(discount, nq, nr, na, nl, para_temp)
@@ -434,11 +351,9 @@ def main():
                        'Complete_LogLikelihood_Mstep': NN_MM_log_likelihoods_com_new,
                        'Latent_entropies': NN_MM_latent_entropies
                        }
-    output = open(datestring + '_ExperimentResult' + '.pkl', 'wb')
+    output = open(datestring + '_EM_twobox' + '.pkl', 'wb')
     pickle.dump(Experiment_dict, output)
     output.close()
-
-    #np.savez('ExperimentResult_npz' + datestring, NN_MM_para_old_traj, NN_MM_log_likelihoods_old)
 
     ## save running parameters
     # parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
@@ -448,7 +363,7 @@ def main():
     #                       'LR_DEC': LR_DEC,
     #                       'dataSet': dataSet,
     #                       'ParaInitial': parameters_iniSet}
-    output1 = open(datestring + '_ParameterMain' + '.pkl', 'wb')
+    output1 = open(datestring + '_ParameterMain_twobox' + '.pkl', 'wb')
     pickle.dump(parameterMain_dict, output1)
     output1.close()
 
