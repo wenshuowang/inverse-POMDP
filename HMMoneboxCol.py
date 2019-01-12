@@ -233,6 +233,7 @@ class HMMoneboxCol:
         Qaux1 = np.sum(np.log(self.pi) * gamma[:, 0])
         Qaux2 = 0
         Qaux3 = 0
+        Qaux4 = 0
 
         #xi_delta = np.zeros((T, self.S, self.S))
 
@@ -257,7 +258,20 @@ class HMMoneboxCol:
              Qaux3 += np.sum(np.log(Bnew[act[t], self._states(rew[t])] +
                                     10 ** -13 * ( Bnew[act[t], self._states(rew[t])] == 0)) * gamma[:, t])
 
-        Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3
+        belief_vector = np.array(
+            [np.arange(0, 1, 1 / self.S) + 1 / self.S / 2, 1 - np.arange(0, 1, 1 / self.S) - 1 / self.S / 2])
+
+        for t in range(T - 1):
+            if act[t] == 1:
+                obstemp = np.ones(self.S)
+            else:
+                obstemp = self.D[col[t]].dot(belief_vector)
+
+            Qaux4 += np.sum(np.log(obstemp) * gamma[:, t])
+
+
+
+        Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3 + Qaux4
         #print alpha
         #print beta
         #print Qaux1, Qaux2, Qaux3

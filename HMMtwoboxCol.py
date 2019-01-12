@@ -333,6 +333,7 @@ class HMMtwoboxCol:
         Qaux1 = np.sum(np.log(self.pi) * gamma[:, 0])
         Qaux2 = 0
         Qaux3 = 0
+        Qaux4 = 0
 
         # xi_delta = np.zeros((T, self.S, self.S))
 
@@ -358,7 +359,27 @@ class HMMtwoboxCol:
             Qaux3 += np.sum(np.log(Bnew[act[t], self._states(rew[t], loc[t])] +
                                    10 ** -13 * (Bnew[act[t], self._states(rew[t], loc[t])] == 0)) * gamma[:, t])
 
-        Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3
+        belief_vector = np.array(
+            [np.arange(0, 1, 1 / self.Ss) + 1 / self.Ss / 2, 1 - np.arange(0, 1, 1 / self.Ss) - 1 / self.Ss / 2])
+
+        for t in range(1, T):
+            if act[t - 1] == pb and loc[t - 1] == 1 and col1[t] == self.Ncol:
+                obs1Emi = np.ones(self.Ss)
+                obs2Emi = self.D2[col2[t]].dot(belief_vector)
+                obsEmi = np.reshape(np.outer(obs1Emi, obs2Emi), self.S)
+            elif act[t - 1] == pb and loc[t - 1] == 2 and col2[t] == self.Ncol:
+                obs1Emi = self.D1[col1[t]].dot(belief_vector)
+                obs2Emi = np.ones(self.Ss)
+                obsEmi = np.reshape(np.outer(obs1Emi, obs2Emi), self.S)
+            else:
+                obs1Emi = self.D1[col1[t]].dot(belief_vector)
+                obs2Emi = self.D2[col2[t]].dot(belief_vector)
+                obsEmi = np.reshape(np.outer(obs1Emi, obs2Emi), self.S)
+
+            Qaux4 += np.sum(np.log(obsEmi) * gamma[:, t])
+
+
+        Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3 + Qaux4
         # print alpha
         # print beta
         # print Qaux1, Qaux2, Qaux3
