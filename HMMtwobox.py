@@ -11,10 +11,10 @@ class HMMtwobox:
         self.L = 3
         self.Ss = int(sqrt(self.S))
 
-
     def _states(self, r, l):
         temp = np.reshape(np.array(range(self.Ss)), [1, self.Ss])
         return np.squeeze(l * self.S * self.R + tensorsum(temp * self.R * self.Ss, r * self.Ss + temp)).astype(int)
+
 
     def forward(self, obs):
         T = obs.shape[0]        # length of a sample sequence
@@ -31,7 +31,6 @@ class HMMtwobox:
                 np.ix_(self._states(rew[t-1], loc[t-1]), self._states(rew[t], loc[t]))]) \
                            * self.B[act[t], self._states(rew[t], loc[t])]
         return alpha
-
 
 
     def backward(self, obs):
@@ -54,6 +53,7 @@ class HMMtwobox:
                                 beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1], loc[t+1])])
 
         return beta
+
 
     def forward_scale(self, obs):
 
@@ -79,6 +79,7 @@ class HMMtwobox:
 
         return alpha, scale
 
+
     def backward_scale(self, obs, scale):
         T = obs.shape[0]  # length of a sample sequence
 
@@ -97,11 +98,13 @@ class HMMtwobox:
 
         return beta
 
+
     def compute_gamma(self, alpha, beta):
         gamma = alpha * beta
         gamma = gamma / np.sum(gamma, 0)
 
         return gamma
+
 
     def compute_xi(self, alpha, beta, obs):
         T = obs.shape[0]  # length of a sample sequence
@@ -119,6 +122,7 @@ class HMMtwobox:
             xi[t, :, :] = xi[t, :, :]/np.sum(xi[t, :, :])
 
         return xi
+
 
     def latent_entr(self, obs):
         T = obs.shape[0]  # length of a sample sequence
@@ -149,8 +153,6 @@ class HMMtwobox:
 
         return lat_ent
 
-    #def likelihood(self, lat, obs, Anew, Bnew):
-
 
     def computeQaux(self, obs, Anew, Bnew):
         '''
@@ -166,8 +168,6 @@ class HMMtwobox:
         rew = obs[:, 1]  # 0 : not have; 1: have
         loc = obs[:, 2]  # location, three possible values
 
-        # alpha = self.forward(obs)
-        # beta = self.backward(obs)
         alpha, scale = self.forward_scale(obs)
         beta = self.backward_scale(obs, scale)
 
@@ -177,34 +177,20 @@ class HMMtwobox:
         Qaux2 = 0
         Qaux3 = 0
 
-        # xi_delta = np.zeros((T, self.S, self.S))
-
         for t in range(T - 1):
-            # Qaux2 += np.sum(np.log(10 ** -13 + Anew[act[t]][
-            #   np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]) * xi[t, :, :])
-
             Qaux2 += np.sum(np.log(Anew[act[t]][np.ix_(self._states(rew[t],loc[t]), self._states(rew[t + 1],loc[t+1]))] +
                                    10 ** -13 * (
                                    Anew[act[t]][np.ix_(self._states(rew[t],loc[t]), self._states(rew[t + 1], loc[t+1]))] == 0))
                             * xi[t, :, :])
 
-            # xi_delta[t, lat[t], lat[t+1]] = 1
-            # Qaux2 += np.sum(np.log(Anew[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))] +
-            #                       1 * (Anew[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))] == 0))
-            #                * xi_delta[t])    #to check the code for computing the Qaux
-
         for t in range(T):
-            # Qaux3 += np.sum(np.log(10 ** -13 + Bnew[act[t], self._states(rew[t])]) * gamma[:, t])
-
             Qaux3 += np.sum(np.log(Bnew[act[t], self._states(rew[t], loc[t])] +
                                    10 ** -13 * (Bnew[act[t], self._states(rew[t], loc[t])] == 0)) * gamma[:, t])
 
         Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3
-        # print alpha
-        # print beta
-        # print Qaux1, Qaux2, Qaux3
 
         return Qaux
+
 
     def computeQauxDE(self, obs, Anew, Bnew, Anewde, Bnewde):
 

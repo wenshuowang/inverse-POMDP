@@ -167,9 +167,11 @@ class twoboxMDP:
 
 
 class twoboxMDPdata(twoboxMDP):
-    def __init__(self, discount, nq, nr, na, nl, parameters, sampleTime, sampleNum):
+    def __init__(self, discount, nq, nr, na, nl, parameters, parametersExp,
+                 sampleTime, sampleNum):
         twoboxMDP.__init__(self, discount, nq, nr, na, nl, parameters)
 
+        self.parametersExp = parametersExp
         self.sampleNum = sampleNum
         self.sampleTime = sampleTime
 
@@ -222,6 +224,11 @@ class twoboxMDPdata(twoboxMDP):
         travelCost = self.parameters[5]
         pushButtonCost = self.parameters[6]
 
+        gamma1_e = self.parametersExp[0]
+        gamma2_e = self.parametersExp[1]
+        epsilon1_e = self.parametersExp[2]
+        epsilon2_e = self.parametersExp[3]
+
         Tb1 = beliefTransitionMatrixGaussian(gamma1, epsilon1, self.nq, sigmaTb)
         Tb2 = beliefTransitionMatrixGaussian(gamma2, epsilon2, self.nq, sigmaTb)
 
@@ -230,8 +237,8 @@ class twoboxMDPdata(twoboxMDP):
             for t in range(self.sampleTime):
                 if t == 0:
                     # Initialize the true world states, sensory information and latent states
-                    self.trueState1[n, t] = np.random.binomial(1, gamma1)
-                    self.trueState2[n, t] = np.random.binomial(1, gamma2)
+                    self.trueState1[n, t] = np.random.binomial(1, gamma1_e)
+                    self.trueState2[n, t] = np.random.binomial(1, gamma2_e)
 
                     self.location[n, t], self.belief1[n, t], self.reward[n, t], self.belief2[
                         n, t] = locationInitial, belief1Initial, rewInitial, belief2Initial
@@ -255,28 +262,28 @@ class twoboxMDPdata(twoboxMDP):
 
                         # button not pressed, then true world dynamic is not affected by actions
                         if self.trueState1[n, t - 1] == 0:
-                            self.trueState1[n, t] = np.random.binomial(1, gamma1)
+                            self.trueState1[n, t] = np.random.binomial(1, gamma1_e)
                         else:
-                            self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1)
+                            self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1_e)
 
                         if self.trueState2[n, t - 1] == 0:
-                            self.trueState2[n, t] = np.random.binomial(1, gamma2)
+                            self.trueState2[n, t] = np.random.binomial(1, gamma2_e)
                         else:
-                            self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2)
+                            self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2_e)
 
                     if self.action[n, t - 1] == pb:  # press button
                         self.location[n, t] = self.location[n, t - 1]  # pressing button does not change location
 
                         #### for pb action, wait for usual time and then pb  #############
                         if self.trueState1[n, t - 1] == 0:
-                            self.trueState1[n, t - 1] = np.random.binomial(1, gamma1)
+                            self.trueState1[n, t - 1] = np.random.binomial(1, gamma1_e)
                         else:
-                            self.trueState1[n, t - 1] = 1 - np.random.binomial(1, epsilon1)
+                            self.trueState1[n, t - 1] = 1 - np.random.binomial(1, epsilon1_e)
 
                         if self.trueState2[n, t - 1] == 0:
-                            self.trueState2[n, t - 1] = np.random.binomial(1, gamma2)
+                            self.trueState2[n, t - 1] = np.random.binomial(1, gamma2_e)
                         else:
-                            self.trueState2[n, t - 1] = 1 - np.random.binomial(1, epsilon2)
+                            self.trueState2[n, t - 1] = 1 - np.random.binomial(1, epsilon2_e)
                         #### for pb action, wait for usual time and then pb  #############
 
 
@@ -284,9 +291,9 @@ class twoboxMDPdata(twoboxMDP):
                             self.belief2[n, t] = np.argmax(np.random.multinomial(1, Tb2[:, self.belief2[n, t - 1]], size=1))
                             # belief on box 2 is independent on box 1
                             if self.trueState2[n, t - 1] == 0:
-                                self.trueState2[n, t] = np.random.binomial(1, gamma2)
+                                self.trueState2[n, t] = np.random.binomial(1, gamma2_e)
                             else:
-                                self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2)
+                                self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2_e)
 
                             if self.trueState1[n, t - 1] == 0:
                                 self.trueState1[n, t] = self.trueState1[n, t - 1]
@@ -306,9 +313,9 @@ class twoboxMDPdata(twoboxMDP):
                             self.belief1[n, t] = np.argmax(np.random.multinomial(1, Tb1[:, self.belief1[n, t - 1]], size=1))
                             # belief on box 1 is independent on box 2
                             if self.trueState1[n, t - 1] == 0:
-                                self.trueState1[n, t] = np.random.binomial(1, gamma1)
+                                self.trueState1[n, t] = np.random.binomial(1, gamma1_e)
                             else:
-                                self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1)
+                                self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1_e)
 
                             if self.trueState2[n, t - 1] == 0:
                                 self.trueState2[n, t] = self.trueState2[n, t - 1]
@@ -366,6 +373,11 @@ class twoboxMDPdata(twoboxMDP):
         travelCost = self.parameters[5]
         pushButtonCost = self.parameters[6]
 
+        gamma1_e = self.parametersExp[0]
+        gamma2_e = self.parametersExp[1]
+        epsilon1_e = self.parametersExp[2]
+        epsilon2_e = self.parametersExp[3]
+
         Tb1 = beliefTransitionMatrixGaussian(gamma1, epsilon1, self.nq, sigmaTb)
         Tb2 = beliefTransitionMatrixGaussian(gamma2, epsilon2, self.nq, sigmaTb)
 
@@ -374,8 +386,8 @@ class twoboxMDPdata(twoboxMDP):
             for t in range(self.sampleTime):
                 if t == 0:
                     # Initialize the true world states, sensory information and latent states
-                    self.trueState1[n, t] = np.random.binomial(1, gamma1)
-                    self.trueState2[n, t] = np.random.binomial(1, gamma2)
+                    self.trueState1[n, t] = np.random.binomial(1, gamma1_e)
+                    self.trueState2[n, t] = np.random.binomial(1, gamma2_e)
 
                     self.location[n, t], self.belief1[n, t], self.reward[n, t], self.belief2[
                         n, t] = locationInitial, belief1Initial, rewInitial, belief2Initial
@@ -403,14 +415,14 @@ class twoboxMDPdata(twoboxMDP):
 
                         # button not pressed, then true world dynamic is not affected by actions
                         if self.trueState1[n, t - 1] == 0:
-                            self.trueState1[n, t] = np.random.binomial(1, gamma1)
+                            self.trueState1[n, t] = np.random.binomial(1, gamma1_e)
                         else:
-                            self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1)
+                            self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1_e)
 
                         if self.trueState2[n, t - 1] == 0:
-                            self.trueState2[n, t] = np.random.binomial(1, gamma2)
+                            self.trueState2[n, t] = np.random.binomial(1, gamma2_e)
                         else:
-                            self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2)
+                            self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2_e)
 
                     if self.action[n, t - 1] == pb:  # press button
                         self.location[n, t] = self.location[n, t - 1]  # pressing button does not change location
@@ -431,9 +443,9 @@ class twoboxMDPdata(twoboxMDP):
                             self.belief2[n, t] = np.argmax(np.random.multinomial(1, Tb2[:, self.belief2[n, t - 1]], size=1))
                             # belief on box 2 is independent on box 1
                             if self.trueState2[n, t - 1] == 0:
-                                self.trueState2[n, t] = np.random.binomial(1, gamma2)
+                                self.trueState2[n, t] = np.random.binomial(1, gamma2_e)
                             else:
-                                self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2)
+                                self.trueState2[n, t] = 1 - np.random.binomial(1, epsilon2_e)
 
                             if self.trueState1[n, t - 1] == 0:
                                 self.trueState1[n, t] = self.trueState1[n, t - 1]
@@ -453,9 +465,9 @@ class twoboxMDPdata(twoboxMDP):
                             self.belief1[n, t] = np.argmax(np.random.multinomial(1, Tb1[:, self.belief1[n, t - 1]], size=1))
                             # belief on box 1 is independent on box 2
                             if self.trueState1[n, t - 1] == 0:
-                                self.trueState1[n, t] = np.random.binomial(1, gamma1)
+                                self.trueState1[n, t] = np.random.binomial(1, gamma1_e)
                             else:
-                                self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1)
+                                self.trueState1[n, t] = 1 - np.random.binomial(1, epsilon1_e)
 
                             if self.trueState2[n, t - 1] == 0:
                                 self.trueState2[n, t] = self.trueState2[n, t - 1]

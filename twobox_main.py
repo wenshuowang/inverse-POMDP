@@ -16,12 +16,9 @@ M_LR_INI = 2 * 10 ** -5           # initial learning rate in the gradient descen
 LR_DEC =  4                       # number of times that the learning rate can be reduced
 
 
-def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
+def twoboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
     #datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
     datestring = datetime.strftime(datetime.now(), '%m%d%Y(%H%M)')   # current time used to set file name
-
-
-    print("\nSet the parameters of the model... \n")
 
     beta = 0     # available food dropped back into box after button press
     gamma1 = parameters[0]   # reward becomes available in box 1
@@ -38,19 +35,17 @@ def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3,
     travelCost = parameters[5]
     pushButtonCost = parameters[6]
 
-    ### Solving the MDP problem with given parameters
-
-    print("Solving the belief MDP...")
-    twobox = twoboxMDP(discount, nq, nr, na, nl, parameters)
-    twobox.setupMDP()
-    twobox.solveMDP_sfm(initial_value = 0)
+    gamma1_e = parametersExp[0]
+    gamma2_e = parametersExp[1]
+    epsilon1_e = parametersExp[2]
+    epsilon2_e = parametersExp[3]
 
 
     ### Gnerate data"""
-    print("Generate data based on the true model...")
+    print("Generating data ...")
     T = sample_length
     N = sample_number
-    twoboxdata = twoboxMDPdata(discount, nq, nr, na, nl, parameters, T, N)
+    twoboxdata = twoboxMDPdata(discount, nq, nr, na, nl, parameters, parametersExp, T, N)
     twoboxdata.dataGenerate_sfm(belief1Initial=0, rewInitial=0, belief2Initial=0, locationInitial=0)
     #twoboxdata.dataGenerate_op(belief1Initial=0, rewInitial=0, belief2Initial=0, locationInitial=0)
     hybrid = twoboxdata.hybrid
@@ -93,7 +88,11 @@ def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3,
                  'reward': Reward,
                  'groom': groom,
                  'travelCost': travelCost,
-                 'pushButtonCost': pushButtonCost
+                 'pushButtonCost': pushButtonCost,
+                 'appRateExperiment1': gamma1_e,
+                 'disappRateExperiment1': epsilon1_e,
+                 'appRateExperiment2': gamma2_e,
+                 'disappRateExperiment2': epsilon2_e
                  }
 
     # create a file that saves the parameter dictionary using pickle
@@ -107,10 +106,10 @@ def twoboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3,
 
 def main():
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
-    parameters_gen = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
-    #[0.1, 0.1, 0.01, 0.01, 0.05, 0.2, 0.3]
+    parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
+    parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
 
-    obsN, latN, truthN, datestring = twoboxGenerate(parameters_gen, sample_length = 5000, sample_number = 1, nq = 5)
+    obsN, latN, truthN, datestring = twoboxGenerate(parametersAgent, parametersExp, sample_length = 5000, sample_number = 1, nq = 5)
     #sys.stdout = logger.Logger(datestring)
     # output will be both on the screen and in the log file
     # No need to manual interaction to specify parameters in the command line
@@ -120,11 +119,7 @@ def main():
                           'E_EPS': E_EPS,
                           'M_LR_INI': M_LR_INI,
                           'LR_DEC': LR_DEC,
-                          #'dataSet': sys.argv[1],
-                          #'optimizer': sys.argv[2],   # GD: standard gradient descent, PGD: projected GD
-                          #'sampleIndex': list(map(int, sys.argv[3].strip('[]').split(','))),
-                          'ParaInitial': [parameters_gen]
-                          #'ParaInitial': [np.array(list(map(float, sys.argv[2].strip('[]').split(','))))]
+                          'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
 
@@ -134,16 +129,6 @@ def main():
 
      ### Set initial parameter point
     parameters_iniSet = parameterMain_dict['ParaInitial']
-
-    # ### read data from file
-    # print("Get data from file...")
-    # dataN_pkl = pickle.load(pkl_file)
-    # pkl_file.close()
-    #
-    # obsN = dataN_pkl['observations']
-    # latN = dataN_pkl['beliefs']
-    # truthN = dataN_pkl['trueStates']
-    # dataN = dataN_pkl['allData']
 
     ### read real para from data file
     pkl_parafile = open(datestring + '_para_twobox' + '.pkl', 'rb')
@@ -165,11 +150,26 @@ def main():
     groom = para_pkl['groom']
     travelCost = para_pkl['travelCost']
     pushButtonCost = para_pkl['pushButtonCost']
+    gamma1_e = para_pkl['appRateExperiment1']
+    epsilon1_e = para_pkl['disappRateExperiment1']
+    gamma2_e = para_pkl['appRateExperiment2']
+    epsilon2_e = para_pkl['disappRateExperiment2']
+
+    print("\nThe true world parameters of box1 are:", "appearing rate =",
+          gamma1_e, ",disappearing rate =", epsilon1_e)
+    print("The true world parameters of box2 are:", "appearing rate =",
+          gamma2_e, ",disappearing rate =", epsilon2_e)
 
     parameters = [gamma1, gamma2, epsilon1, epsilon2,
                   groom, travelCost, pushButtonCost]
-    print("\nThe true parameters are", parameters)
+    print("\nThe internal model parameters are", parameters)
+    print("gamma1/2, rate that food appears of box 1/2"
+          "\nepsilon1/2, rate that food disappears of box 1/2"
+          "\ngroom, reward of grooming"
+          "\ntravelCost, cost of traveling action"
+          "\npushButtonCost, cost of pressing the button per unit of reward")
 
+    print("\nThe initial points for estimation are:", parameters_iniSet)
 
     #### EM algorithm for parameter estimation
     print("\nEM algorithm begins ...")
@@ -204,7 +204,8 @@ def main():
         for mm in range(MM):
             parameters_old = np.copy(parameters_iniSet[mm])
 
-            print("\n", mm + 1, "-th initial estimation:", parameters_old)
+            print("\n######################################################\n",
+                  mm + 1, "-th initial estimation:", parameters_old)
 
             itermax = E_MAX_ITER #100  # iteration number for the EM algorithm
             eps = E_EPS   # Stopping criteria for E-step in EM algorithm
@@ -233,7 +234,6 @@ def main():
                 ##########  E-step ##########
 
                 ## Use old parameters to estimate posterior
-
                 #twoboxGra = twoboxMDPder(discount, nq, nr, na, nl, parameters_old, vinitial)
                 twoboxGra = twoboxMDPder(discount, nq, nr, na, nl, parameters_old)
                 ThA_old = twoboxGra.ThA
@@ -361,7 +361,6 @@ def main():
     #                       'E_EPS': E_EPS,
     #                       'M_LR_INI': M_LR_INI,
     #                       'LR_DEC': LR_DEC,
-    #                       'dataSet': dataSet,
     #                       'ParaInitial': parameters_iniSet}
     output1 = open(datestring + '_ParameterMain_twobox' + '.pkl', 'wb')
     pickle.dump(parameterMain_dict, output1)
