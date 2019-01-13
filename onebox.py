@@ -161,10 +161,11 @@ class oneboxMDPdata(oneboxMDP):
     This class generates the data based on the object oneboxMDP. The parameters, and thus the transition matrices and
     the rewrd function, are shared for the oneboxMDP and this data generator class.
     """
-    def __init__(self, discount, nq, nr, na, parameters,
+    def __init__(self, discount, nq, nr, na, parameters, parametersExp,
                  sampleTime, sampleNum):
         oneboxMDP.__init__(self, discount, nq, nr, na, parameters)
 
+        self.parametersExp = parametersExp
         self.sampleNum = sampleNum
         self.sampleTime = sampleTime
 
@@ -193,11 +194,14 @@ class oneboxMDPdata(oneboxMDP):
         epsilon = self.parameters[2]  # available food disappears
         rho = self.parameters[3]  # food in mouth is consumed
 
+        gamma_e = self.parametersExp[0]
+        epsilon_e = self.parametersExp[1]
+
 
         for i in range(self.sampleNum):
             for t in range(self.sampleTime):
                 if t == 0:
-                    self.trueState[i, t] = np.random.binomial(1, gamma)
+                    self.trueState[i, t] = np.random.binomial(1, gamma_e)
 
                     self.reward[i, t], self.belief[i, t] = rewInitial, beliefInitial
                     self.hybrid[i, t] = self.reward[i, t] * self.nq + self.belief[i, t]    # This is for one box only
@@ -211,15 +215,15 @@ class oneboxMDPdata(oneboxMDP):
                         self.action[i, t] = self.policy[self.hybrid[i, t]]
 
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t] = np.random.binomial(1, gamma)
+                            self.trueState[i, t] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon_e)
                     else:
                         #### for pb action, wait for usual time and then pb  #############
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t - 1] = np.random.binomial(1, gamma)
+                            self.trueState[i, t - 1] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon_e)
                         #### for pb action, wait for usual time and then pb  #############
 
                         if self.trueState[i, t - 1] == 0:
@@ -264,11 +268,13 @@ class oneboxMDPdata(oneboxMDP):
         epsilon = self.parameters[2]  # available food disappears
         rho = self.parameters[3]  # food in mouth is consumed
 
+        gamma_e = self.parametersExp[0]
+        epsilon_e = self.parametersExp[1]
 
         for i in range(self.sampleNum):
             for t in range(self.sampleTime):
                 if t == 0:
-                    self.trueState[i, t] = np.random.binomial(1, gamma)
+                    self.trueState[i, t] = np.random.binomial(1, gamma_e)
 
                     self.reward[i, t], self.belief[i, t] = rewInitial, beliefInitial
                     self.hybrid[i, t] = self.reward[i, t] * self.nq + self.belief[i, t]    # This is for one box only
@@ -283,15 +289,15 @@ class oneboxMDPdata(oneboxMDP):
                         self.action[i, t] = self._chooseAction(np.vstack(self.softpolicy).T[self.hybrid[i, t]])
 
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t] = np.random.binomial(1, gamma)
+                            self.trueState[i, t] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon_e)
                     else:   # press button
                         #### for pb action, wait for usual time and then pb  #############
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t - 1] = np.random.binomial(1, gamma)
+                            self.trueState[i, t - 1] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon_e)
                         #### for pb action, wait for usual time and then pb  #############
 
                         if self.trueState[i, t - 1] == 0:

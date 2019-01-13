@@ -6,17 +6,14 @@ import sys
 from datetime import datetime
 
 E_MAX_ITER = 100 # 100    # maximum number of iterations of E-step
-GD_THRESHOLD = 0.01   # 0.01      # stopping criteria of M-step (gradient descent)
+GD_THRESHOLD = 0.01 # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -6                  # stopping criteria of E-step
 M_LR_INI = 1 * 10 ** -6           # initial learning rate in the gradient descent step
 LR_DEC =  2                       # number of times that the learning rate can be reduced
 
-def oneboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, na = 2, discount = 0.99):
+def oneboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, na = 2, discount = 0.99):
     #datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
     datestring = datetime.strftime(datetime.now(), '%m%d%Y(%H%M)')   # current time used to set file name
-
-
-    print("\nSet the parameters of the model... \n")
 
     beta = parameters[0]     # available food dropped back into box after button press
     gamma = parameters[1]   # reward becomes available
@@ -24,13 +21,16 @@ def oneboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, na = 2,
     rho = parameters[3]   # .99      # food in mouth is consumed
     pushButtonCost = parameters[4]
     Reward = 1
+
+    gamma_e = parametersExp[0]
+    epsilon_e = parametersExp[1]
     #parameters = [beta, gamma, epsilon, rho, pushButtonCost]
 
     ### Gnerate data"""
-    print("Generate data based on the true model...")
+    print("\nGenerating data...")
     T = sample_length
     N = sample_number
-    oneboxdata = oneboxMDPdata(discount, nq, nr, na, parameters, T, N)
+    oneboxdata = oneboxMDPdata(discount, nq, nr, na, parameters, parametersExp, T, N)
     oneboxdata.dataGenerate_sfm(beliefInitial = 0, rewInitial = 0)  # softmax policy
 
     belief = oneboxdata.belief
@@ -64,7 +64,9 @@ def oneboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, na = 2,
                  'disappRate': epsilon,
                  'consume': rho,
                  'reward': Reward,
-                 'pushButtonCost': pushButtonCost
+                 'pushButtonCost': pushButtonCost,
+                 'appRateExperiment': gamma_e,
+                 'disappRateExperiment': epsilon_e
                  }
 
     # create a file that saves the parameter dictionary using pickle
@@ -77,11 +79,19 @@ def oneboxGenerate(parameters, sample_length, sample_number, nq, nr = 2, na = 2,
     return obsN, latN, truthN, datestring
 
 def main():
-    # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
-    parameters_gen = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
+    ##############################################
+    #
+    #   python -u onebox_main.py [0.2,0.3,0.1,0.9,0.6] [0.2,0.15]
+    #   \([0.1,0.4,0.3,0.7,0.8]-[0.25,0.5,0.3,0.8,0.4]-[0.35,0.2,0.2,0.6,0.5]-[0.47,0.25,0.36,0.8,0.5]\)
+    #   > $(date +%m%d%Y\(%H%M\)).txt &
+    #
+    ##############################################
+    # parameters = [beta, gamma, epsilon, rho, pushButtonCost]
+    parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
+    parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
 
-    obsN, latN, truthN, datestring = oneboxGenerate(parameters_gen, sample_length = 1000, sample_number = 1, nq = 5)
-    #sys.stdout = logger.Logger(datestring)
+    obsN, latN, truthN, datestring = oneboxGenerate(parametersAgent, parametersExp, sample_length = 1000, sample_number = 1, nq = 5)
+    # sys.stdout = logger.Logger(datestring)
     # output will be both on the screen and in the log file
     # No need to manual interaction to specify parameters in the command line
 
@@ -90,12 +100,8 @@ def main():
                           'E_EPS': E_EPS,
                           'M_LR_INI': M_LR_INI,
                           'LR_DEC': LR_DEC,
-                          #'dataSet': sys.argv[1],
-                          #'optimizer': sys.argv[2],   # GD: standard gradient descent, PGD: projected GD
-                          #'sampleIndex': list(map(int, sys.argv[3].strip('[]').split(','))),
-                          'ParaInitial': [parameters_gen]
-                          #'ParaInitial': [np.array(list(map(float, sys.argv[2].strip('[]').split(','))))]
-                          # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
+                          'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
+                          # Initial parameter is a set that contains arrays of parameters, divided by columns(-)
                           }
 
     ### Choose which sample is used for inference
@@ -120,12 +126,23 @@ def main():
     rho = para_pkl['consume']
     Reward = para_pkl['reward']
     pushButtonCost = para_pkl['pushButtonCost']
+    gamma_e = para_pkl['appRateExperiment']
+    epsilon_e = para_pkl['disappRateExperiment']
+
+    print("\nThe true world parameters are:", "appearing rate =",
+          gamma_e, ",disappearing rate =", epsilon_e)
 
     parameters = [beta, gamma, epsilon, rho, pushButtonCost]
-    print("\nThe true parameters are", parameters)
+    print("\nThe internal model parameters are", parameters)
+    print("beta, probability that available food dropped back into box after button press"
+          "\ngamma, rate that food appears"
+          "\nepsilon, rate that food disappears"
+          "\nrho, food in mouth is consumed"
+          "\npushButtonCost, cost of pressing the button per unit of reward")
 
+    print("\nThe initial points for estimation are:", parameters_iniSet)
     #### EM algorithm for parameter estimation
-    print("\nEM algorithm begins ...")
+    print("\n\nEM algorithm begins ...")
     # NN denotes multiple data set, and MM denotes multiple initial points
     NN_MM_para_old_traj = []
     NN_MM_para_new_traj = []
@@ -157,7 +174,8 @@ def main():
         for mm in range(MM):
             parameters_old = np.copy(parameters_iniSet[mm])
 
-            print("\n", mm + 1, "-th initial estimation:", parameters_old)
+            print("\n######################################################\n",
+                  mm + 1, "-th initial estimation:", parameters_old)
 
             itermax = E_MAX_ITER #100  # iteration number for the EM algorithm
             eps = E_EPS   # Stopping criteria for E-step in EM algorithm
@@ -173,7 +191,7 @@ def main():
 
             count_E = 0
             while count_E < itermax:
-                print("The", count_E + 1, "-th iteration of the EM(G) algorithm")
+                print("\nThe", count_E + 1, "-th iteration of the EM(G) algorithm")
 
                 if count_E == 0:
                     parameters_old = np.copy(parameters_iniSet[mm])
@@ -307,7 +325,6 @@ def main():
     #                       'E_EPS': E_EPS,
     #                       'M_LR_INI': M_LR_INI,
     #                       'LR_DEC': LR_DEC,
-    #                       'dataSet': dataSet,
     #                       'ParaInitial': parameters_iniSet}
     output1 = open(datestring + '_ParameterMain_onebox' + '.pkl', 'wb')
     pickle.dump(parameterMain_dict, output1)

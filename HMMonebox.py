@@ -95,6 +95,7 @@ class HMMonebox:
 
         return beta
 
+
     def latent_entr(self, obs):
         T = obs.shape[0]  # length of a sample sequence
 
@@ -130,6 +131,7 @@ class HMMonebox:
 
         return gamma
 
+
     def compute_xi(self, alpha, beta, obs):
         T = obs.shape[0]  # length of a sample sequence
 
@@ -144,6 +146,7 @@ class HMMonebox:
             xi[t, :, :] = xi[t, :, :]/np.sum(xi[t, :, :])
 
         return xi
+
 
     def likelihood(self, lat, obs, Anew, Bnew):
         '''
@@ -167,7 +170,6 @@ class HMMonebox:
                              10 ** -13 * (Anew[act[t], self.S * rew[t] + lat[t], self.S * rew[t + 1] + lat[t + 1]] == 0) )
 
             #likeh2 += np.log(Anew[act[t], self.S * rew[t] + lat[t], self.S * rew[t + 1] + lat[t + 1]] + 10 ** -13)
-
 
         for t in range(T):
             #likeh3 += np.sum(np.log(0.000000001 + Bnew[act[t], self._states(rew[t])]) )
@@ -218,8 +220,6 @@ class HMMonebox:
         Qaux2 = 0
         Qaux3 = 0
 
-        #xi_delta = np.zeros((T, self.S, self.S))
-
         for t in range(T - 1):
             #Qaux2 += np.sum(np.log(10 ** -13 + Anew[act[t]][
             #   np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]) * xi[t, :, :])
@@ -240,9 +240,6 @@ class HMMonebox:
                                     10 ** -13 * ( Bnew[act[t], self._states(rew[t])] == 0)) * gamma[:, t])
 
         Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3
-        #print alpha
-        #print beta
-        #print Qaux1, Qaux2, Qaux3
 
         return Qaux
 
@@ -255,8 +252,6 @@ class HMMonebox:
         act = obs[:, 0]  # 0: doing nothing; 1: press button
         rew = obs[:, 1]  # 0 : not have; 1: have
 
-        #alpha = self.forward(obs)
-        #beta = self.backward(obs)
         alpha, scale = self.forward_scale(obs)
         beta = self.backward_scale(obs, scale)
 
