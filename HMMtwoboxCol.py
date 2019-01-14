@@ -312,12 +312,16 @@ class HMMtwoboxCol:
     #def likelihood(self, lat, obs, Anew, Bnew):
 
 
-    def computeQaux(self, obs, Anew, Bnew, Cnew):
+    def computeQaux(self, obs, Anew, Bnew, Cnew, D1new, D2new):
+
         '''
         computer the Q auxillary funciton, the expected complete data likelihood
-        :param obs: observation sequence, used to calculate alpha, beta, gamma, xi
-        :param Anew: updated A transition matrix
-        :param Bnew: updated B emission matrix
+        :param obs: observations
+        :param Anew: transition matrix with new parameters
+        :param Bnew: policy with new parameters
+        :param Cnew: Trans_hybrid_obs12 with new parameters
+        :param D1new: box1, Obs_emis.dot(Trans_state, to calculate observation emission, with new parameters
+        :param D2new: box2, Obs_emis.dot(Trans_state, to calculate observation emission, with new parameters
         :return: Q auxilary value
         '''
         T = obs.shape[0]  # length of a sample sequence
@@ -361,15 +365,15 @@ class HMMtwoboxCol:
         for t in range(1, T):
             if act[t - 1] == pb and loc[t - 1] == 1 and col1[t] == self.Ncol:
                 obs1Emi = np.ones(self.Ss)
-                obs2Emi = self.D2[col2[t]].dot(belief_vector)
+                obs2Emi = D2new[col2[t]].dot(belief_vector)
                 obsEmi = np.reshape(np.outer(obs1Emi, obs2Emi), self.S)
             elif act[t - 1] == pb and loc[t - 1] == 2 and col2[t] == self.Ncol:
-                obs1Emi = self.D1[col1[t]].dot(belief_vector)
+                obs1Emi = D1new[col1[t]].dot(belief_vector)
                 obs2Emi = np.ones(self.Ss)
                 obsEmi = np.reshape(np.outer(obs1Emi, obs2Emi), self.S)
             else:
-                obs1Emi = self.D1[col1[t]].dot(belief_vector)
-                obs2Emi = self.D2[col2[t]].dot(belief_vector)
+                obs1Emi = D1new[col1[t]].dot(belief_vector)
+                obs2Emi = D2new[col2[t]].dot(belief_vector)
                 obsEmi = np.reshape(np.outer(obs1Emi, obs2Emi), self.S)
 
             Qaux4 += np.sum(np.log(obsEmi) * gamma[:, t])
