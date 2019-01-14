@@ -202,14 +202,12 @@ class HMMoneboxCol:
         return lat_ent
 
 
-    def computeQaux(self, obs, Anew, Bnew, Cnew, Dnew):
+    def computeQaux(self, obs, Anew, Bnew, Cnew):
         '''
         computer the Q auxillary funciton, the expected complete data likelihood
         :param obs: observation sequence, used to calculate alpha, beta, gamma, xi
         :param Anew: updated A transition matrix
         :param Bnew: updated B emission matrix
-        :param Cnew: updated Trans_hybrid_obs
-        :param Dnew: updated Obs_emis.dot(Trans_state), to calculate oberservation emission
         :return: Q auxilary value
         '''
         T = obs.shape[0]  # length of a sample sequence
@@ -252,7 +250,7 @@ class HMMoneboxCol:
             if act[t] == 1:
                 obstemp = np.ones(self.S)
             else:
-                obstemp = Dnew[col[t]].dot(belief_vector)
+                obstemp = self.D[col[t]].dot(belief_vector)
 
             Qaux4 += np.sum(np.log(obstemp) * gamma[:, t])
 

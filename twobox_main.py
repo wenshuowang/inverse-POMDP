@@ -260,7 +260,6 @@ def main():
                     break
 
                 ##########  M(G)-step ##########
-                M_thresh = GD_THRESHOLD
                 count_M = 0
                 vinitial = 0
                 para_new_traj.append([])
@@ -273,16 +272,16 @@ def main():
                 # Start the gradient descent from the old parameters
                 parameters_new = np.copy(parameters_old)
                 complete_likelihood_new = complete_likelihood_old
-                log_likelihood = complete_likelihood_new + latent_entropy
+                likelihood = complete_likelihood_new + latent_entropy
 
                 para_new_traj[count_E].append(parameters_new)
                 log_likelihoods_com_new[count_E].append(complete_likelihood_new)
-                log_likelihoods_new[count_E].append(log_likelihood)
+                log_likelihoods_new[count_E].append(likelihood)
 
-                print("\nM-step")
-                print(parameters_new)
-                print(complete_likelihood_new)
-                print(log_likelihood)
+                print("    M-step")
+                print("     ", parameters_new)
+                print("     ", complete_likelihood_new)
+                print("     ", likelihood)
 
                 while True:
 
@@ -303,18 +302,18 @@ def main():
                     print("         ", complete_likelihood_new_temp)
 
                     ## Update the parameter if the ECDLL can be improved
-                    if complete_likelihood_new_temp > complete_likelihood_new + M_thresh:
+                    if complete_likelihood_new_temp > complete_likelihood_new + GD_THRESHOLD:
                         parameters_new = np.copy(para_temp)
                         complete_likelihood_new = complete_likelihood_new_temp
-                        log_likelihood = complete_likelihood_new + latent_entropy
+                        likelihood = complete_likelihood_new + latent_entropy
 
                         para_new_traj[count_E].append(parameters_new)
                         log_likelihoods_com_new[count_E].append(complete_likelihood_new)
-                        log_likelihoods_new[count_E].append(log_likelihood)
+                        log_likelihoods_new[count_E].append(likelihood)
 
-                        print('\n', parameters_new)
-                        print(complete_likelihood_new)
-                        print(log_likelihood)
+                        print("     ", parameters_new)
+                        print("     ", complete_likelihood_new)
+                        print("     ", likelihood)
 
                         count_M += 1
                     else:
