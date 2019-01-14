@@ -180,10 +180,11 @@ class oneboxColMDP:
 
 
 class oneboxColMDPdata(oneboxColMDP):
-    def __init__(self, discount, nq, nr, na, parameters,
+    def __init__(self, discount, nq, nr, na, parameters, parametersExp,
                  sampleTime, sampleNum):
         oneboxColMDP.__init__(self, discount, nq, nr, na, parameters)
 
+        self.parametersExp = parametersExp
         self.sampleNum = sampleNum
         self.sampleTime = sampleTime
 
@@ -211,11 +212,16 @@ class oneboxColMDPdata(oneboxColMDP):
         qmin = self.parameters[6]
         qmax = self.parameters[7]
 
+        gamma_e = self.parametersExp[0]
+        epsilon_e = self.parametersExp[1]
+        qmin_e = self.parametersExp[2]
+        qmax_e = self.parametersExp[3]
+
         for i in range(self.sampleNum):
             for t in range(self.sampleTime):
                 if t == 0:
-                    self.trueState[i, t] = np.random.binomial(1, gamma)
-                    q = self.trueState[i, t] * qmin + (1 - self.trueState[i, t]) * qmax
+                    self.trueState[i, t] = np.random.binomial(1, gamma_e)
+                    q = self.trueState[i, t] * qmin_e + (1 - self.trueState[i, t]) * qmax_e
                     self.color[i, t] = np.random.binomial(Ncol, q)  # color
 
                     # The first belief is not based on world state
@@ -225,11 +231,11 @@ class oneboxColMDPdata(oneboxColMDP):
                 else:
                     if self.action[i, t - 1] != pb:
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t] = np.random.binomial(1, gamma)
+                            self.trueState[i, t] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon_e)
 
-                        q = self.trueState[i, t] * qmin + (1 - self.trueState[i, t]) * qmax
+                        q = self.trueState[i, t] * qmin_e + (1 - self.trueState[i, t]) * qmax_e
                         self.color[i, t] = np.random.binomial(Ncol, q)  # color
 
                         self.belief[i, t] = np.argmax(
@@ -246,9 +252,9 @@ class oneboxColMDPdata(oneboxColMDP):
                     else:
                         #### for pb action, wait for usual time and then pb  #############
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t - 1] = np.random.binomial(1, gamma)
+                            self.trueState[i, t - 1] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon_e)
                         #### for pb action, wait for usual time and then pb  #############
 
                         if self.trueState[i, t - 1] == 0:
@@ -290,11 +296,16 @@ class oneboxColMDPdata(oneboxColMDP):
         qmin = self.parameters[6]
         qmax = self.parameters[7]
 
+        gamma_e = self.parametersExp[0]
+        epsilon_e = self.parametersExp[1]
+        qmin_e = self.parametersExp[2]
+        qmax_e = self.parametersExp[3]
+
         for i in range(self.sampleNum):
             for t in range(self.sampleTime):
                 if t == 0:
-                    self.trueState[i, t] = np.random.binomial(1, gamma)
-                    q = self.trueState[i, t] * qmin + (1 - self.trueState[i, t]) * qmax
+                    self.trueState[i, t] = np.random.binomial(1, gamma_e)
+                    q = self.trueState[i, t] * qmin_e + (1 - self.trueState[i, t]) * qmax_e
                     self.color[i, t] = np.random.binomial(Ncol, q)  # color
 
                     # The first belief is not based on world state
@@ -305,11 +316,11 @@ class oneboxColMDPdata(oneboxColMDP):
                 else:
                     if self.action[i, t - 1] != pb:
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t] = np.random.binomial(1, gamma)
+                            self.trueState[i, t] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t] = 1 - np.random.binomial(1, epsilon_e)
 
-                        q = self.trueState[i, t] * qmin + (1 - self.trueState[i, t]) * qmax
+                        q = self.trueState[i, t] * qmin_e + (1 - self.trueState[i, t]) * qmax_e
                         self.color[i, t] = np.random.binomial(Ncol, q)  # color
 
                         self.belief[i, t] = np.argmax(
@@ -326,9 +337,9 @@ class oneboxColMDPdata(oneboxColMDP):
                     else:
                         #### for pb action, wait for usual time and then pb  #############
                         if self.trueState[i, t - 1] == 0:
-                            self.trueState[i, t - 1] = np.random.binomial(1, gamma)
+                            self.trueState[i, t - 1] = np.random.binomial(1, gamma_e)
                         else:
-                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon)
+                            self.trueState[i, t - 1] = 1 - np.random.binomial(1, epsilon_e)
                         #### for pb action, wait for usual time and then pb  #############
 
                         if self.trueState[i, t - 1] == 0:

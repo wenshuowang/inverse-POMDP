@@ -65,13 +65,10 @@ class HMMoneboxCol:
             [np.arange(0, 1, 1 / self.S) + 1 / self.S / 2, 1 - np.arange(0, 1, 1 / self.S) - 1 / self.S / 2])
 
         for t in range(1, T):
-            #print(t)
             if act[t - 1] == 1 and col[t] == self.Ncol:
                 alpha[:, t] = np.dot(alpha[:, t - 1], self.A[act[t-1]][
                         np.ix_(self._states(rew[t - 1]), self._states(rew[t]))]) \
                                   * self.B[act[t], self._states(rew[t])]
-                #else:
-                #    alpha[:, t] = 0
             else:
                 alpha[:,  t] = np.dot(alpha[:, t - 1] * (self.D[col[t]].dot(belief_vector)),
                                       self.C[col[t]][np.ix_(self._states(rew[t-1]), self._states(rew[t]))]) \
@@ -104,8 +101,6 @@ class HMMoneboxCol:
             if act[t] == 1 and col[t+1] == self.Ncol:
                 beta[:, t] = np.dot(self.A[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t+1]))],
                                 beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])])
-                #else:
-                #    beta[:,t] = 0
             else:
                 beta[:, t] = np.dot(self.C[col[t+1]][np.ix_(self._states(rew[t]), self._states(rew[t+1]))],
                                     beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]) * (self.D[col[t + 1]].dot(belief_vector))
@@ -130,8 +125,6 @@ class HMMoneboxCol:
             if act[t] == 1 and col[t+1] == self.Ncol:
                 beta[:, t] = np.dot(self.A[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t+1]))],
                                 beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])])
-                #else:
-                #    beta[:,t] = 0
             else:
                 beta[:, t] = np.dot(self.C[col[t+1]][np.ix_(self._states(rew[t]), self._states(rew[t+1]))],
                                     beta[:, t+1] * self.B[act[t+1], self._states(rew[t+1])]) * (self.D[col[t + 1]].dot(belief_vector))
@@ -238,8 +231,6 @@ class HMMoneboxCol:
         #xi_delta = np.zeros((T, self.S, self.S))
 
         for t in range(T - 1):
-            #Qaux2 += np.sum(np.log(10 ** -13 + Anew[act[t]][
-            #   np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]) * xi[t, :, :])
             if act[t] == 1:
                 Trantemp = Anew[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]
             else:
@@ -247,14 +238,8 @@ class HMMoneboxCol:
 
             Qaux2 += np.sum(np.log(Trantemp + 10 ** -13 * (Trantemp == 0)) * xi[t, :, :])
 
-            #xi_delta[t, lat[t], lat[t+1]] = 1
-            #Qaux2 += np.sum(np.log(Anew[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))] +
-            #                       1 * (Anew[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))] == 0))
-            #                * xi_delta[t])    #to check the code for computing the Qaux
 
         for t in range(T):
-            #Qaux3 += np.sum(np.log(10 ** -13 + Bnew[act[t], self._states(rew[t])]) * gamma[:, t])
-
              Qaux3 += np.sum(np.log(Bnew[act[t], self._states(rew[t])] +
                                     10 ** -13 * ( Bnew[act[t], self._states(rew[t])] == 0)) * gamma[:, t])
 
@@ -269,12 +254,7 @@ class HMMoneboxCol:
 
             Qaux4 += np.sum(np.log(obstemp) * gamma[:, t])
 
-
-
         Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3 + Qaux4
-        #print alpha
-        #print beta
-        #print Qaux1, Qaux2, Qaux3
 
         return Qaux
 

@@ -10,11 +10,9 @@ E_EPS = 10 ** -8                  # stopping criteria of E-step
 M_LR_INI = 2 * 10 ** -5           # initial learning rate in the gradient descent step
 LR_DEC =  1                       # number of times that the learning rate can be reduced
 
-def oneboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, na = 2, discount = 0.99):
+def oneboxColGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, na = 2, discount = 0.99):
     #datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
     datestring = datetime.strftime(datetime.now(), '%m%d%Y(%H%M)')  # current time used to set file name
-
-    print("\nSet the parameters of the model... \n")
 
     beta = parameters[0]  # available food dropped back into box after button press
     gamma = parameters[1]  # reward becomes available
@@ -27,12 +25,16 @@ def oneboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, na =
     qmax =  parameters[7]
     #parameters = [beta, gamma, epsilon, rho, pushButtonCost,
     #              NumCol, qmin, qmax]
+    gamma_e = parametersExp[0]
+    epsilon_e = parametersExp[1]
+    qmin_e = parametersExp[2]
+    qmax_e = parametersExp[3]
 
     ### Gnerate data"""
-    print("Generate data based on the true model...")
+    print("Generating data...")
     T = sample_length
     N = sample_number
-    oneboxColdata = oneboxColMDPdata(discount, nq, nr, na, parameters, T, N)
+    oneboxColdata = oneboxColMDPdata(discount, nq, nr, na, parameters, parametersExp, T, N)
     oneboxColdata.dataGenerate_sfm(beliefInitial = 0, rewInitial = 0)
 
     belief = oneboxColdata.belief
@@ -72,7 +74,11 @@ def oneboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, na =
                  'pushButtonCost': pushButtonCost,
                  'NumCol': NumCol,
                  'qmin': qmin,
-                 'qmax': qmax
+                 'qmax': qmax,
+                 'appRateExperiment': gamma_e,
+                 'disappRateExperiment': epsilon_e,
+                 'qminExperiment': qmin_e,
+                 'qmaxExperiment': qmax_e
                  }
 
     # create a file that saves the parameter dictionary using pickle
@@ -87,10 +93,11 @@ def oneboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, na =
 def main():
     print('start')
     #parameters = [beta, gamma, epsilon, rho, pushButtonCost, NumCol, qmin, qmax]
-    #parameters_gen = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
-    parameters_gen = [0, 0.3, 0.1, 1, 0.6, 4, 0.3, 0.7]
-    obsN, latN, truthN, datestring = oneboxColGenerate(parameters_gen, sample_length = 1000, sample_number = 1, nq = 5)
-    #sys.stdout = logger.Logger(datestring)
+    parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
+    parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
+
+    obsN, latN, truthN, datestring = oneboxColGenerate(parametersAgent, parametersExp, sample_length = 1000, sample_number = 1, nq = 5)
+    # sys.stdout = logger.Logger(datestring)
     # output will be both on the screen and in the log file
     # No need to manual interaction to specify parameters in the command line
 
@@ -99,11 +106,8 @@ def main():
                           'E_EPS': E_EPS,
                           'M_LR_INI': M_LR_INI,
                           'LR_DEC': LR_DEC,
-                          #'dataSet': sys.argv[1],
-                          #'optimizer': sys.argv[2],   # GD: standard gradient descent, PGD: projected GD
-                          #'sampleIndex': list(map(int, sys.argv[3].strip('[]').split(','))),
-                          'ParaInitial': [parameters_gen]
-                          #'ParaInitial': [np.array(list(map(float, sys.argv[2].strip('[]').split(','))))]
+                          'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in
+                                          sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
 
@@ -132,10 +136,26 @@ def main():
     NumCol = para_pkl['NumCol']
     qmin = para_pkl['qmin']
     qmax = para_pkl['qmax']
+    gamma_e = para_pkl['appRateExperiment']
+    epsilon_e = para_pkl['disappRateExperiment']
+    qmin_e = para_pkl['qminExperiment']
+    qmax_e = para_pkl['qmaxExperiment']
+
+    print("\nThe true world parameters are:", "appearing rate =",
+          gamma_e, ",disappearing rate =", epsilon_e,
+          "\nThe color parameters are:" "qmin_e =", qmin_e, "and qmax_e =", qmax_e)
 
     parameters = [beta, gamma, epsilon, rho, pushButtonCost, NumCol, qmin, qmax]
-
-    print("\nThe true parameters are", parameters)
+    print("\nThe internal model parameters are", parameters)
+    print("beta, probability that available food dropped back into box after button press"
+          "\ngamma, rate that food appears"
+          "\nepsilon, rate that food disappears"
+          "\nrho, food in mouth is consumed"
+          "\npushButtonCost, cost of pressing the button per unit of reward"
+          "\nNcol, number of colors (assume equal to experiment setting)"
+          "\nqmin, color parameter"
+          "\nqmax, color parameter")
+    print("\nThe initial points for estimation are:", parameters_iniSet)
 
     #### EM algorithm for parameter estimation
     print("\nEM algorithm begins ...")
@@ -170,7 +190,8 @@ def main():
         for mm in range(MM):
             parameters_old = np.copy(parameters_iniSet[mm])
 
-            print("\n", mm + 1, "-th initial estimation:", parameters_old)
+            print("\n######################################################\n",
+                  mm + 1, "-th initial estimation:", parameters_old)
 
             itermax = E_MAX_ITER #100  # iteration number for the EM algorithm
             eps = E_EPS   # Stopping criteria for E-step in EM algorithm
@@ -217,6 +238,7 @@ def main():
                 latent_entropies.append(latent_entropy)
                 log_likelihoods_old.append(log_likelihood)
 
+                print(parameters_old)
                 print(complete_likelihood_old)
                 print(log_likelihood)
 
@@ -268,13 +290,14 @@ def main():
                     pi = np.ones(nq) / nq
                     Ncol_new = para_temp[5] - 1
                     oneHMMCol_new = HMMoneboxCol(ThA_new, softpolicy_new, TBo_old, OE_TS_new, pi, Ncol_new)
-
                     complete_likelihood_new_temp = oneHMMCol.computeQaux(obs, ThA_new, softpolicy_new, TBo_new)
+
+                    print("         ", para_temp)
+                    print("         ", complete_likelihood_new_temp)
 
                     ## Update the parameter if the ECDLL can be improved
                     if complete_likelihood_new_temp > complete_likelihood_new + GD_THRESHOLD:
                         parameters_new = np.copy(para_temp)
-
                         complete_likelihood_new = complete_likelihood_new_temp
                         log_likelihood = complete_likelihood_new + latent_entropy
 
