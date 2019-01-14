@@ -9,12 +9,6 @@ from __future__ import division
 from boxtask_func import *
 from HMMoneboxCol import *
 from MDPclass import *
-from mdptoolbox.mdp import *
-
-import numpy.matlib
-from scipy.linalg import block_diag
-from numpy.linalg import inv
-
 
 # we need two different transition matrices, one for each of the following actions:
 a0 = 0  # a0 = do nothing
