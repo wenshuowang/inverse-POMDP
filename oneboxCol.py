@@ -404,22 +404,25 @@ class oneboxColMDPder(oneboxColMDP):
         onebox_new = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para_new)
         onebox_new.setupMDP()
         onebox_new.solveMDP_sfm()
-        Qaux = oneboxColHMM.computeQaux(obs, onebox_new.ThA, onebox_new.softpolicy, onebox_new.Trans_hybrid_obs)
+        Qaux = oneboxColHMM.computeQaux(obs, onebox_new.ThA, onebox_new.softpolicy,
+                                        onebox_new.Trans_hybrid_obs, onebox_new.Obs_emis_trans)
 
-        # delta
-        # para1 = [beta + delta, gamma, epsilon, rho, pushButtonCost, NumCol, qmin, qmax]
-        # one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
-        # one1.setupMDP()
-        # one1.solveMDP_sfm()
-        # Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy, one1.Trans_hybrid_obs)
-        # dQauxdpara_beta = (Qaux1 - Qaux) / delta
+        #delta
+        para1 = [beta + delta, gamma, epsilon, rho, pushButtonCost, NumCol, qmin, qmax]
+        one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
+        one1.setupMDP()
+        one1.solveMDP_sfm()
+        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy,
+                                         one1.Trans_hybrid_obs, one1.Obs_emis_trans)
+        dQauxdpara_beta = (Qaux1 - Qaux) / delta
 
         # gamma
         para1 = [beta , gamma + delta, epsilon, rho, pushButtonCost, NumCol, qmin, qmax]
         one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
         one1.setupMDP()
         one1.solveMDP_sfm()
-        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy, one1.Trans_hybrid_obs)
+        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy,
+                                         one1.Trans_hybrid_obs, one1.Obs_emis_trans)
         dQauxdpara_gamma = (Qaux1 - Qaux) / delta
 
         # epsilon
@@ -427,23 +430,26 @@ class oneboxColMDPder(oneboxColMDP):
         one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
         one1.setupMDP()
         one1.solveMDP_sfm()
-        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy, one1.Trans_hybrid_obs)
+        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy,
+                                         one1.Trans_hybrid_obs, one1.Obs_emis_trans)
         dQauxdpara_epsilon = (Qaux1 - Qaux) / delta
 
-        # rho
-        # para1 = [beta , gamma , epsilon, rho + delta, pushButtonCost, NumCol, qmin, qmax]
-        # one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
-        # one1.setupMDP()
-        # one1.solveMDP_sfm()
-        # Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy, one1.Trans_hybrid_obs)
-        # dQauxdpara_rho = (Qaux1 - Qaux) / delta
+        #rho
+        para1 = [beta , gamma , epsilon, rho + delta, pushButtonCost, NumCol, qmin, qmax]
+        one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
+        one1.setupMDP()
+        one1.solveMDP_sfm()
+        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy,
+                                         one1.Trans_hybrid_obs, one1.Obs_emis_trans)
+        dQauxdpara_rho = (Qaux1 - Qaux) / delta
 
         # pb cost
         para1 = [beta , gamma , epsilon, rho, pushButtonCost + delta, NumCol, qmin, qmax]
         one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
         one1.setupMDP()
         one1.solveMDP_sfm()
-        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy, one1.Trans_hybrid_obs)
+        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy,
+                                         one1.Trans_hybrid_obs, one1.Obs_emis_trans)
         dQauxdpara_pb = (Qaux1 - Qaux) / delta
 
         # qmin
@@ -451,7 +457,8 @@ class oneboxColMDPder(oneboxColMDP):
         one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
         one1.setupMDP()
         one1.solveMDP_sfm()
-        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy, one1.Trans_hybrid_obs)
+        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy,
+                                         one1.Trans_hybrid_obs, one1.Obs_emis_trans)
         dQauxdpara_qmin = (Qaux1 - Qaux) / delta
 
         # qmax
@@ -459,9 +466,10 @@ class oneboxColMDPder(oneboxColMDP):
         one1 = oneboxColMDP(self.discount, self.nq, self.nr, self.na, para1)
         one1.setupMDP()
         one1.solveMDP_sfm()
-        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy, one1.Trans_hybrid_obs)
+        Qaux1 = oneboxColHMM.computeQaux(obs, one1.ThA, one1.softpolicy,
+                                         one1.Trans_hybrid_obs, one1.Obs_emis_trans)
         dQauxdpara_qmax = (Qaux1 - Qaux) / delta
 
-        #return dQauxdpara_beta, dQauxdpara_gamma, dQauxdpara_epsilon, dQauxdpara_rho, dQauxdpara_pb, 0, dQauxdpara_qmin, dQauxdpara_qmax
-        return 0, dQauxdpara_gamma, dQauxdpara_epsilon, 0, dQauxdpara_pb, 0, dQauxdpara_qmin, dQauxdpara_qmax
+        return dQauxdpara_beta, dQauxdpara_gamma, dQauxdpara_epsilon, dQauxdpara_rho, dQauxdpara_pb, 0, dQauxdpara_qmin, dQauxdpara_qmax
+        #return 0, dQauxdpara_gamma, dQauxdpara_epsilon, 0, dQauxdpara_pb, 0, dQauxdpara_qmin, dQauxdpara_qmax
 

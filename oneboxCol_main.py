@@ -91,7 +91,11 @@ def oneboxColGenerate(parameters, parametersExp, sample_length, sample_number, n
     return obsN, latN, truthN, datestring
 
 def main():
-    print('start')
+    ##############################################
+    #
+    #   python -u oneboxCol_main.py [0.2,0.3,0.1,0.9,0.6,4,0.35,0.7] [0.2,0.15,0.4,0.6] \([0.1,0.4,0.3,0.7,0.8,4,0.4,0.6]-[0.25,0.5,0.3,0.8,0.4,4,0.3,0.74]\) > $(date +%m%d%Y\(%H%M\)).txt &
+    #
+    ##############################################
     #parameters = [beta, gamma, epsilon, rho, pushButtonCost, NumCol, qmin, qmax]
     parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
     parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
@@ -229,7 +233,7 @@ def main():
                 oneHMMCol = HMMoneboxCol(ThA_old, softpolicy_old, TBo_old, OE_TS_old, pi, Ncol_old)
 
                 ## Calculate likelihood of observed and complete date, and entropy of the latent sequence
-                complete_likelihood_old = oneHMMCol.computeQaux(obs, ThA_old, softpolicy_old, TBo_old)
+                complete_likelihood_old = oneHMMCol.computeQaux(obs, ThA_old, softpolicy_old, TBo_old, OE_TS_old)
                 latent_entropy = oneHMMCol.latent_entr(obs)
                 log_likelihood = complete_likelihood_old + latent_entropy
 
@@ -266,7 +270,7 @@ def main():
                 log_likelihoods_com_new[count_E].append(complete_likelihood_new)
                 log_likelihoods_new[count_E].append(log_likelihood)
 
-                print('\n M-step ')
+                print('\nM-step ')
                 print(parameters_new)
                 print(complete_likelihood_new)
                 print(log_likelihood)
@@ -287,10 +291,7 @@ def main():
 
                     TBo_new = onebox_new.Trans_hybrid_obs
                     OE_TS_new = onebox_new.Obs_emis_trans
-                    pi = np.ones(nq) / nq
-                    Ncol_new = para_temp[5] - 1
-                    oneHMMCol_new = HMMoneboxCol(ThA_new, softpolicy_new, TBo_old, OE_TS_new, pi, Ncol_new)
-                    complete_likelihood_new_temp = oneHMMCol.computeQaux(obs, ThA_new, softpolicy_new, TBo_new)
+                    complete_likelihood_new_temp = oneHMMCol.computeQaux(obs, ThA_new, softpolicy_new, TBo_new, OE_TS_new)
 
                     print("         ", para_temp)
                     print("         ", complete_likelihood_new_temp)
@@ -305,7 +306,7 @@ def main():
                         log_likelihoods_com_new[count_E].append(complete_likelihood_new)
                         log_likelihoods_new[count_E].append(log_likelihood)
 
-                        print(parameters_new)
+                        print('\n', parameters_new)
                         print(complete_likelihood_new)
                         print(log_likelihood)
 
