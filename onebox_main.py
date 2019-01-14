@@ -246,7 +246,7 @@ def main():
                 log_likelihoods_com_new[count_E].append(complete_likelihood_new)
                 log_likelihoods_new[count_E].append(likelihood)
 
-                print('\n M-step ')
+                print('\nM-step ')
                 print(parameters_new)
                 print(complete_likelihood_new)
                 print(likelihood)
@@ -275,7 +275,7 @@ def main():
                         log_likelihoods_com_new[count_E].append(complete_likelihood_new)
                         log_likelihoods_new[count_E].append(likelihood)
 
-                        print(parameters_new)
+                        print('\n', parameters_new)
                         print(complete_likelihood_new)
                         print(likelihood)
 

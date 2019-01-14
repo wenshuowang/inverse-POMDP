@@ -105,7 +105,16 @@ def twoboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, 
     return obsN, latN, truthN, datestring
 
 def main():
+    ##############################################
+    #
+    #   python -u twobox_main.py [0.3,0.3,0.1,0.1,0.1,0.9,0.6] [0.2,0.2,0.15,0.15]
+    #   \([0.25,0.2,0.15,0.2,0.3,0.8,0.7]\)
+    #   > $(date +%m%d%Y\(%H%M\)).txt &
+    #
+    ##############################################
+
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
+    # parametersExp = [gamma1, gamma2, epsilon1, epsilon2]
     parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
     parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
 
