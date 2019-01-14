@@ -4,10 +4,10 @@ import pickle
 import sys
 from datetime import datetime
 
-E_MAX_ITER = 10       # 100    # maximum number of iterations of E-step
+E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.1   # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -8                  # stopping criteria of E-step
-M_LR_INI = 5 * 10 ** -8           # initial learning rate in the gradient descent step
+M_LR_INI = 1 * 10 ** -9           # initial learning rate in the gradient descent step
 LR_DEC =  2                       # number of times that the learning rate can be reduced
 
 
@@ -57,8 +57,8 @@ def twoboxColGenerate(parameters, parametersExp, sample_length, sample_number, n
     gamma2_e = parametersExp[1]
     epsilon1_e = parametersExp[2]
     epsilon2_e = parametersExp[3]
-    qmin_e = parametersExp[2]
-    qmax_e = parametersExp[3]
+    qmin_e = parametersExp[4]
+    qmax_e = parametersExp[5]
 
     # parameters = [gamma1, gamma2, epsilon1, epsilon2,
     #              groom, travelCost, pushButtonCost, NumCol, qmin, qmax]
@@ -135,6 +135,13 @@ def twoboxColGenerate(parameters, parametersExp, sample_length, sample_number, n
     return obsN, latN, truthN, datestring
 
 def main():
+    ##############################################
+    #
+    #   python -u twobox_main.py
+
+    #
+    ##############################################
+
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost,
     # pushButtonCost, NumCol, qmin, qmax]
     parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
@@ -291,7 +298,8 @@ def main():
                                          Obs_emis_trans1_old, Obs_emis_trans2_old, pi, Ncol_old)
 
                 ## Calculate likelihood of observed and complete date, and entropy of the latent sequence
-                complete_likelihood_old = twoColHMM.computeQaux(obs, ThA_old, softpolicy_old, Trans_hybrid_obs12_old)
+                complete_likelihood_old = twoColHMM.computeQaux(obs, ThA_old, softpolicy_old,
+                                                                Trans_hybrid_obs12_old, Obs_emis_trans1_old, Obs_emis_trans2_old)
                 latent_entropy = twoColHMM.latent_entr(obs)
                 log_likelihood = complete_likelihood_old + latent_entropy
 
@@ -328,14 +336,15 @@ def main():
                 log_likelihoods_com_new[count_E].append(complete_likelihood_new)
                 log_likelihoods_new[count_E].append(log_likelihood)
 
-                print("    M-step")
-                print("     ", parameters_new)
-                print("     ", complete_likelihood_new)
-                print("     ", log_likelihood)
+                print("\nM-step")
+                print(parameters_new)
+                print(complete_likelihood_new)
+                print(log_likelihood)
 
                 while True:
 
                     derivative_value = twoboxColGra.dQauxdpara_sim(obs, parameters_new)
+                    print(derivative_value)
                     # vinitial is value from previous iteration, this is for computational efficiency
                     para_temp = parameters_new + learnrate * np.array(derivative_value)
                     # vinitial = derivative_value[-1]  # value iteration starts with value from previous iteration
@@ -347,8 +356,10 @@ def main():
                     ThA_new = twoboxCol_new.ThA
                     softpolicy_new = twoboxCol_new.softpolicy
                     Trans_hybrid_obs12_new = twoboxCol_new.Trans_hybrid_obs12
-                    complete_likelihood_new_temp = twoColHMM.computeQaux(obs, ThA_new,
-                                                                         softpolicy_new, Trans_hybrid_obs12_new)
+                    Obs_emis_trans1_new = twoboxCol_new.Obs_emis_trans1
+                    Obs_emis_trans2_new = twoboxCol_new.Obs_emis_trans2
+                    complete_likelihood_new_temp = twoColHMM.computeQaux(obs, ThA_new,softpolicy_new, Trans_hybrid_obs12_new,
+                                                                         Obs_emis_trans1_new, Obs_emis_trans2_new)
 
                     print("         ", para_temp)
                     print("         ", complete_likelihood_new_temp)
@@ -363,9 +374,9 @@ def main():
                         log_likelihoods_com_new[count_E].append(complete_likelihood_new)
                         log_likelihoods_new[count_E].append(log_likelihood)
 
-                        print("     ", parameters_new)
-                        print("     ", complete_likelihood_new)
-                        print("     ", log_likelihood)
+                        print('\n', parameters_new)
+                        print(complete_likelihood_new)
+                        print(log_likelihood)
 
                         count_M += 1
 

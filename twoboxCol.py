@@ -257,8 +257,8 @@ class twoboxColMDPdata(twoboxColMDP):
         gamma2_e = self.parametersExp[1]
         epsilon1_e = self.parametersExp[2]
         epsilon2_e = self.parametersExp[3]
-        qmin_e = self.parametersExp[2]
-        qmax_e = self.parametersExp[3]
+        qmin_e = self.parametersExp[4]
+        qmax_e = self.parametersExp[5]
 
 
         ## Generate data
@@ -449,8 +449,8 @@ class twoboxColMDPdata(twoboxColMDP):
         gamma2_e = self.parametersExp[1]
         epsilon1_e = self.parametersExp[2]
         epsilon2_e = self.parametersExp[3]
-        qmin_e = self.parametersExp[2]
-        qmax_e = self.parametersExp[3]
+        qmin_e = self.parametersExp[4]
+        qmax_e = self.parametersExp[5]
 
         ## Generate data
         for n in range(self.sampleNum):
@@ -663,14 +663,16 @@ class twoboxColMDPder(twoboxColMDP):
         twobox_new = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para_new)
         twobox_new.setupMDP()
         twobox_new.solveMDP_sfm()
-        Qaux = twoboxColHMM.computeQaux(obs, twobox_new.ThA, twobox_new.softpolicy, twobox_new.Trans_hybrid_obs12)
+        Qaux = twoboxColHMM.computeQaux(obs, twobox_new.ThA, twobox_new.softpolicy, twobox_new.Trans_hybrid_obs12,
+                                        twobox_new.Obs_emis_trans1, twobox_new.Obs_emis_trans2)
 
         para1 = [ gamma1 + perturb, gamma2, epsilon1, epsilon2, Groom,
                  travelCost, pushButtonCost, NumCol, qmin, qmax]
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_gamma1 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 + perturb, epsilon1, epsilon2, Groom,
@@ -678,7 +680,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_gamma2 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1+ perturb, epsilon2, Groom,
@@ -686,7 +689,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_epsilon1 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1, epsilon2+ perturb, Groom,
@@ -694,7 +698,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_epsilon2 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2, epsilon1, epsilon2, Groom + perturb,
@@ -702,7 +707,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_Groom = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1, epsilon2, Groom,
@@ -710,7 +716,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_travelCost = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1, epsilon2, Groom,
@@ -718,7 +725,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_pushButtonCost = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2 , epsilon1, epsilon2, Groom,
@@ -726,7 +734,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_qmin = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2, epsilon1, epsilon2, Groom,
@@ -734,7 +743,8 @@ class twoboxColMDPder(twoboxColMDP):
         two1 = twoboxColMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
         two1.setupMDP()
         two1.solveMDP_sfm()
-        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12)
+        Qaux1 = twoboxColHMM.computeQaux(obs, two1.ThA, two1.softpolicy, two1.Trans_hybrid_obs12,
+                                         two1.Obs_emis_trans1, two1.Obs_emis_trans2)
         dQauxdpara_qmax = (Qaux1 - Qaux) / perturb
 
         return dQauxdpara_gamma1, dQauxdpara_gamma2, dQauxdpara_epsilon1, dQauxdpara_epsilon2, \
