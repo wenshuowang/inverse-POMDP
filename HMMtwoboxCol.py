@@ -116,6 +116,7 @@ class HMMtwoboxCol:
 
         return beta
 
+
     def forward_scale(self, obs):
 
         T = obs.shape[0]        # length of a sample sequence
@@ -165,6 +166,7 @@ class HMMtwoboxCol:
 
         return alpha, scale
 
+
     def backward_scale(self, obs, scale):
         T = obs.shape[0]  # length of a sample sequence
 
@@ -207,11 +209,13 @@ class HMMtwoboxCol:
 
         return beta
 
+
     def compute_gamma(self, alpha, beta):
         gamma = alpha * beta
         gamma = gamma / np.sum(gamma, 0)
 
         return gamma
+
 
     def compute_xi(self, alpha, beta, obs):
         T = obs.shape[0]  # length of a sample sequence
@@ -253,6 +257,7 @@ class HMMtwoboxCol:
             xi[t, :, :] = xi[t, :, :] / np.sum(xi[t, :, :])
 
         return xi
+
 
     def latent_entr(self, obs):
         T = obs.shape[0]  # length of a sample sequence
@@ -338,8 +343,6 @@ class HMMtwoboxCol:
         # xi_delta = np.zeros((T, self.S, self.S))
 
         for t in range(T - 1):
-            # Qaux2 += np.sum(np.log(10 ** -13 + Anew[act[t]][
-            #   np.ix_(self._states(rew[t]), self._states(rew[t + 1]))]) * xi[t, :, :])
             if act[t] == pb and loc[t] == 1 and col1[t+1] == self.Ncol:
                 Trantemp = Anew[act[t]][np.ix_(self._states(rew[t],loc[t]), self._states(rew[t + 1],loc[t+1]))]
             elif act[t] == pb and loc[t] == 2 and col2[t+1] == self.Ncol:
@@ -348,14 +351,7 @@ class HMMtwoboxCol:
                 Trantemp = Cnew[col1[t+1]][col2[t+1]][act[t]][np.ix_(self._states(rew[t], loc[t]), self._states(rew[t + 1], loc[t+1]))]
             Qaux2 += np.sum(np.log( Trantemp + 10 ** -13 * (Trantemp == 0)) * xi[t, :, :])
 
-            # xi_delta[t, lat[t], lat[t+1]] = 1
-            # Qaux2 += np.sum(np.log(Anew[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))] +
-            #                       1 * (Anew[act[t]][np.ix_(self._states(rew[t]), self._states(rew[t + 1]))] == 0))
-            #                * xi_delta[t])    #to check the code for computing the Qaux
-
         for t in range(T):
-            # Qaux3 += np.sum(np.log(10 ** -13 + Bnew[act[t], self._states(rew[t])]) * gamma[:, t])
-
             Qaux3 += np.sum(np.log(Bnew[act[t], self._states(rew[t], loc[t])] +
                                    10 ** -13 * (Bnew[act[t], self._states(rew[t], loc[t])] == 0)) * gamma[:, t])
 
@@ -380,9 +376,6 @@ class HMMtwoboxCol:
 
 
         Qaux = 1 * (Qaux1 + Qaux2) + 1 * Qaux3 + Qaux4
-        # print alpha
-        # print beta
-        # print Qaux1, Qaux2, Qaux3
 
         return Qaux
 

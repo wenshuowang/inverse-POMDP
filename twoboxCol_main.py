@@ -11,7 +11,7 @@ M_LR_INI = 5 * 10 ** -8           # initial learning rate in the gradient descen
 LR_DEC =  2                       # number of times that the learning rate can be reduced
 
 
-def twoboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
+def twoboxColGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
     # datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
     datestring = datetime.strftime(datetime.now(), '%m%d%Y(%H%M)')  # current time used to set file name
 
@@ -53,23 +53,24 @@ def twoboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl =
     qmin = parameters[8]
     qmax = parameters[9]
 
+    gamma1_e = parametersExp[0]
+    gamma2_e = parametersExp[1]
+    epsilon1_e = parametersExp[2]
+    epsilon2_e = parametersExp[3]
+    qmin_e = parametersExp[2]
+    qmax_e = parametersExp[3]
+
     # parameters = [gamma1, gamma2, epsilon1, epsilon2,
     #              groom, travelCost, pushButtonCost, NumCol, qmin, qmax]
 
-    ### Solving the MDP problem with given parameters
-    print("Solving the belief MDP...")
-    twoboxCol = twoboxColMDP(discount, nq, nr, na, nl, parameters)
-    twoboxCol.setupMDP()
-    twoboxCol.solveMDP_sfm(initial_value=0)
-
-
     ### Gnerate data"""
-    print("Generate data based on the true model...")
+    print("Generating data...")
     T = sample_length
     N = sample_number
-    twoboxColdata = twoboxColMDPdata(discount, nq, nr, na, nl, parameters, T, N)
+    twoboxColdata = twoboxColMDPdata(discount, nq, nr, na, nl, parameters, parametersExp, T, N)
     twoboxColdata.dataGenerate_sfm(belief1Initial=0, rewInitial=0, belief2Initial=0, locationInitial=0)
     # twoboxdata.dataGenerate_op(belief1Initial=0, rewInitial=0, belief2Initial=0, locationInitial=0)
+
     hybrid = twoboxColdata.hybrid
     action = twoboxColdata.action
     location = twoboxColdata.location
@@ -115,7 +116,13 @@ def twoboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl =
                  'pushButtonCost': pushButtonCost,
                  'ColorNumber': NumCol,
                  'qmin': qmin,
-                 'qmax': qmax
+                 'qmax': qmax,
+                 'appRateExperiment1': gamma1_e,
+                 'disappRateExperiment1': epsilon1_e,
+                 'appRateExperiment2': gamma2_e,
+                 'disappRateExperiment2': epsilon2_e,
+                 'qminExperiment': qmin_e,
+                 'qmaxExperiment': qmax_e
                  }
 
     # create a file that saves the parameter dictionary using pickle
@@ -128,11 +135,14 @@ def twoboxColGenerate(parameters, sample_length, sample_number, nq, nr = 2, nl =
     return obsN, latN, truthN, datestring
 
 def main():
-    # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost, NumCol, qmin, qmax]
-    #parameters_gen = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
-    parameters_gen = [0.1,0.1,0.01,0.01,0.05,0.2,0.3,5,0.4,0.6]
+    # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost,
+    # pushButtonCost, NumCol, qmin, qmax]
+    parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
+    parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
 
-    obsN, latN, truthN, datestring = twoboxColGenerate(parameters_gen, sample_length = 5000, sample_number = 1, nq = 5)
+    #parameters_gen = [0.1,0.1,0.01,0.01,0.05,0.2,0.3,5,0.4,0.6]
+
+    obsN, latN, truthN, datestring = twoboxColGenerate(parametersAgent, parametersExp, sample_length = 5000, sample_number = 1, nq = 5)
     # sys.stdout = logger.Logger(datestring)
     # output will be both on the screen and in the log file
     # No need to manual interaction to specify parameters in the command line
@@ -143,11 +153,8 @@ def main():
                           'E_EPS': E_EPS,
                           'M_LR_INI': M_LR_INI,
                           'LR_DEC': LR_DEC,
-                          # 'dataSet': sys.argv[1],
-                          # 'optimizer': sys.argv[2],   # GD: standard gradient descent, PGD: projected GD
-                          # 'sampleIndex': list(map(int, sys.argv[3].strip('[]').split(','))),
-                          'ParaInitial': [parameters_gen]
-                          # 'ParaInitial': [np.array(list(map(float, sys.argv[2].strip('[]').split(','))))]
+                          'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in
+                                          sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
 
@@ -181,11 +188,33 @@ def main():
     NumCol = para_pkl['ColorNumber']
     qmin = para_pkl['qmin']
     qmax = para_pkl['qmax']
+    gamma1_e = para_pkl['appRateExperiment1']
+    epsilon1_e = para_pkl['disappRateExperiment1']
+    gamma2_e = para_pkl['appRateExperiment2']
+    epsilon2_e = para_pkl['disappRateExperiment2']
+    qmin_e = para_pkl['qminExperiment']
+    qmax_e = para_pkl['qmaxExperiment']
+
+    print("\nThe true world parameters of box1 are:", "appearing rate =",
+          gamma1_e, ",disappearing rate =", epsilon1_e)
+    print("The true world parameters of box2 are:", "appearing rate =",
+          gamma2_e, ",disappearing rate =", epsilon2_e)
+    print("\nThe color parameters are:" "qmin_e =", qmin_e, "and qmax_e =", qmax_e)
 
     parameters = [gamma1, gamma2, epsilon1, epsilon2,
                   groom, travelCost, pushButtonCost,
                   NumCol, qmin, qmax]
-    print("\nThe true parameters are", parameters)
+    print("\nThe internal model parameters are", parameters)
+    print("gamma1/2, rate that food appears of box 1/2"
+          "\nepsilon1/2, rate that food disappears of box 1/2"
+          "\ngroom, reward of grooming"
+          "\ntravelCost, cost of traveling action"
+          "\npushButtonCost, cost of pressing the button per unit of reward"
+          "\nNcol, number of colors (assume equal to experiment setting)"
+          "\nqmin, color parameter"
+          "\nqmax, color parameter")
+
+    print("\nThe initial points for estimation are:", parameters_iniSet)
 
     ### EM algorithm for parameter estimation
     print("\nEM algorithm begins ...")
@@ -219,7 +248,8 @@ def main():
         for mm in range(MM):
             parameters_old = np.copy(parameters_iniSet[mm])
 
-            print("\n", mm + 1, "-th initial estimation:", parameters_old)
+            print("\n######################################################\n",
+                  mm + 1, "-th initial estimation:", parameters_old)
 
             itermax = E_MAX_ITER  # 100  # iteration number for the EM algorithm
             eps = E_EPS  # Stopping criteria for E-step in EM algorithm
@@ -244,7 +274,6 @@ def main():
                     parameters_old = np.copy(parameters_new)  # update parameters
 
                 para_old_traj.append(parameters_old)
-
 
                 ##########  E-step ##########
 
@@ -380,14 +409,6 @@ def main():
     pickle.dump(Experiment_dict, output)
     output.close()
 
-    ## save running parameters
-    # parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
-    #                       'GD_THRESHOLD': GD_THRESHOLD,
-    #                       'E_EPS': E_EPS,
-    #                       'M_LR_INI': M_LR_INI,
-    #                       'LR_DEC': LR_DEC,
-    #                       'dataSet': dataSet,
-    #                       'ParaInitial': parameters_iniSet}
     output1 = open(datestring + '_ParameterMain_twoboxCol' + '.pkl', 'wb')
     pickle.dump(parameterMain_dict, output1)
     output1.close()
