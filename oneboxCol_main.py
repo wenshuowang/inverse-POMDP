@@ -4,11 +4,11 @@ import pickle
 import sys
 from datetime import datetime
 
-E_MAX_ITER = 100       # 100    # maximum number of iterations of E-step
+E_MAX_ITER = 200       # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.08   # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -8                  # stopping criteria of E-step
 M_LR_INI = 2 * 10 ** -5           # initial learning rate in the gradient descent step
-LR_DEC =  1                       # number of times that the learning rate can be reduced
+LR_DEC =  2                       # number of times that the learning rate can be reduced
 
 def oneboxColGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, na = 2, discount = 0.99):
     #datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
@@ -93,7 +93,7 @@ def oneboxColGenerate(parameters, parametersExp, sample_length, sample_number, n
 def main():
     ##############################################
     #
-    #   python -u oneboxCol_main.py [0.2,0.3,0.1,0.9,0.6,4,0.35,0.7] [0.2,0.15,0.4,0.6] \([0.1,0.4,0.3,0.7,0.8,4,0.4,0.6]-[0.25,0.5,0.3,0.8,0.4,4,0.3,0.74]\) > $(date +%m%d%Y\(%H%M\)).txt &
+    #   python -u oneboxCol_main.py [0.2,0.3,0.1,0.9,0.6,4,0.35,0.7] [0.2,0.15,0.4,0.6] \([0.1,0.4,0.3,0.7,0.8,4,0.4,0.6]-[0.25,0.5,0.3,0.8,0.4,4,0.3,0.74]-[0.15,0.25,0.22,0.75,0.7,4,0.45,0.65]\) > $(date +%m%d%Y\(%H%M\))_oneboxCol.txt &
     #
     ##############################################
     #parameters = [beta, gamma, epsilon, rho, pushButtonCost, NumCol, qmin, qmax]
@@ -318,22 +318,21 @@ def main():
 
                 count_E += 1
 
-                MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
-                MM_para_new_traj.append(para_new_traj)
-                MM_log_likelihoods_old.append(
-                    log_likelihoods_old)  # likelihood trajectories for a particular set of data
-                MM_log_likelihoods_new.append(log_likelihoods_new)
-                MM_log_likelihoods_com_old.append(log_likelihoods_com_old)  # old posterior, old parameters
-                MM_log_likelihoods_com_new.append(log_likelihoods_com_new)  # old posterior, new parameters
-                MM_latent_entropies.append(latent_entropies)
+            MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
+            MM_para_new_traj.append(para_new_traj)
+            MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
+            MM_log_likelihoods_new.append(log_likelihoods_new)
+            MM_log_likelihoods_com_old.append(log_likelihoods_com_old)  # old posterior, old parameters
+            MM_log_likelihoods_com_new.append(log_likelihoods_com_new)  # old posterior, new parameters
+            MM_latent_entropies.append(latent_entropies)
 
-            NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
-            NN_MM_para_new_traj.append(MM_para_new_traj)
-            NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
-            NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
-            NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)  # old posterior, old parameters
-            NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)  # old posterior, new parameters
-            NN_MM_latent_entropies.append(MM_latent_entropies)
+        NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
+        NN_MM_para_new_traj.append(MM_para_new_traj)
+        NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
+        NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
+        NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)  # old posterior, old parameters
+        NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)  # old posterior, new parameters
+        NN_MM_latent_entropies.append(MM_latent_entropies)
 
         ## save the running data
         Experiment_dict = {'ParameterTrajectory_Estep': NN_MM_para_old_traj,

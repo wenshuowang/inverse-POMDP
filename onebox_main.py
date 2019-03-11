@@ -4,12 +4,14 @@ from onebox import *
 import pickle
 import sys
 from datetime import datetime
+import os
 
-E_MAX_ITER = 100 # 100    # maximum number of iterations of E-step
+
+E_MAX_ITER = 200 # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.01 # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -6                  # stopping criteria of E-step
-M_LR_INI = 1 * 10 ** -6           # initial learning rate in the gradient descent step
-LR_DEC =  2                       # number of times that the learning rate can be reduced
+M_LR_INI = 8 * 10 ** -6           # initial learning rate in the gradient descent step
+LR_DEC =  4                       # number of times that the learning rate can be reduced
 
 def oneboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, na = 2, discount = 0.99):
     #datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
@@ -81,16 +83,27 @@ def oneboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, 
 def main():
     ##############################################
     #
-    #   python -u onebox_main.py [0.2,0.3,0.1,0.9,0.6] [0.2,0.15]
-    #   \([0.1,0.4,0.3,0.7,0.8]-[0.25,0.5,0.3,0.8,0.4]-[0.35,0.2,0.2,0.6,0.5]-[0.47,0.25,0.36,0.8,0.5]\)
-    #   > $(date +%m%d%Y\(%H%M\)).txt &
+    #   python -u onebox_main.py [0.2,0.3,0.1,0.9,0.6] [0.2,0.15] \([0.1,0.4,0.3,0.7,0.8]-[0.25,0.5,0.3,0.8,0.4]-[0.35,0.2,0.2,0.6,0.5]-[0.47,0.25,0.36,0.8,0.5]\) > $(date +%m%d%Y\(%H%M\))_onebox.txt &
     #
     ##############################################
     # parameters = [beta, gamma, epsilon, rho, pushButtonCost]
-    parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
-    parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
+    #parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
+    parametersAgent = np.array([0.01,0.4,0.2,0.99,0.6])
+    #parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
+    parametersExp = np.array([0.3,0.1])
 
     obsN, latN, truthN, datestring = oneboxGenerate(parametersAgent, parametersExp, sample_length = 1000, sample_number = 1, nq = 5)
+
+    # path = os.getcwd()
+    # datestring = '02062019(1602)'
+    # dataN_pkl_file = open(path + '/Results/' + datestring + '_dataN_onebox.pkl', 'rb')
+    # dataN_pkl = pickle.load(dataN_pkl_file)
+    # dataN_pkl_file.close()
+    # obsN = dataN_pkl['observations']
+    # latN = dataN_pkl['beliefs']
+    # truthN = dataN_pkl['trueStates']
+
+
     # sys.stdout = logger.Logger(datestring)
     # output will be both on the screen and in the log file
     # No need to manual interaction to specify parameters in the command line
@@ -100,7 +113,9 @@ def main():
                           'E_EPS': E_EPS,
                           'M_LR_INI': M_LR_INI,
                           'LR_DEC': LR_DEC,
-                          'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
+                          'ParaInitial': [np.array([0.01, 0.35, 0.15, 0.99, 0.4])]
+                          #'ParaInitial': [np.array([0.35,0.2,0.2,0.6,0.5])]
+                          #'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, divided by columns(-)
                           }
 
@@ -112,6 +127,7 @@ def main():
     parameters_iniSet = parameterMain_dict['ParaInitial']
 
     ### read real para from data file
+    # pkl_parafile = open(path + '/Results/' + datestring + '_para_onebox' + '.pkl', 'rb')
     pkl_parafile = open(datestring + '_para_onebox' + '.pkl', 'rb')
     para_pkl = pickle.load(pkl_parafile)
     pkl_parafile.close()
@@ -190,7 +206,7 @@ def main():
             latent_entropies = []
 
             count_E = 0
-            while count_E < itermax:
+            while True:
                 print("\nThe", count_E + 1, "-th iteration of the EM(G) algorithm")
 
                 if count_E == 0:
@@ -252,6 +268,7 @@ def main():
                 print(likelihood)
 
                 while True:
+                    #print(learnrate)
                     para_temp = parameters_new + learnrate * np.array(oneboxGra.dQauxdpara_sim(obs, parameters_new))
 
                     ## Check the ECDLL (old posterior, new parameters)
@@ -287,22 +304,21 @@ def main():
 
                 count_E += 1
 
-                MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
-                MM_para_new_traj.append(para_new_traj)
-                MM_log_likelihoods_old.append(
-                    log_likelihoods_old)  # likelihood trajectories for a particular set of data
-                MM_log_likelihoods_new.append(log_likelihoods_new)
-                MM_log_likelihoods_com_old.append(log_likelihoods_com_old)  # old posterior, old parameters
-                MM_log_likelihoods_com_new.append(log_likelihoods_com_new)  # old posterior, new parameters
-                MM_latent_entropies.append(latent_entropies)
+            MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
+            MM_para_new_traj.append(para_new_traj)
+            MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
+            MM_log_likelihoods_new.append(log_likelihoods_new)
+            MM_log_likelihoods_com_old.append(log_likelihoods_com_old)  # old posterior, old parameters
+            MM_log_likelihoods_com_new.append(log_likelihoods_com_new)  # old posterior, new parameters
+            MM_latent_entropies.append(latent_entropies)
 
-            NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
-            NN_MM_para_new_traj.append(MM_para_new_traj)
-            NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
-            NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
-            NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)  # old posterior, old parameters
-            NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)  # old posterior, new parameters
-            NN_MM_latent_entropies.append(MM_latent_entropies)
+        NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
+        NN_MM_para_new_traj.append(MM_para_new_traj)
+        NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
+        NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
+        NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)  # old posterior, old parameters
+        NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)  # old posterior, new parameters
+        NN_MM_latent_entropies.append(MM_latent_entropies)
 
     #### Save result data and outputs log
 

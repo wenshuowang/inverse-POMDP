@@ -8,7 +8,7 @@ E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.1   # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -8                  # stopping criteria of E-step
 M_LR_INI = 1 * 10 ** -9           # initial learning rate in the gradient descent step
-LR_DEC =  2                       # number of times that the learning rate can be reduced
+LR_DEC =  3                       # number of times that the learning rate can be reduced
 
 
 def twoboxColGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
@@ -137,13 +137,12 @@ def twoboxColGenerate(parameters, parametersExp, sample_length, sample_number, n
 def main():
     ##############################################
     #
-    #   python -u twobox_main.py
+    #   python -u twoboxCol_main.py [0.35,0.3,0.15,0.1,0.1,0.3,0.6,5,0.42,0.66] [0.15,0.3,0.1,0.15,0.4,0.6] \([0.4,0.3,0.19,0.2,0.16,0.25,0.5,5,0.3,0.7]-[0.2,0.4,0.1,0.25,0.12,0.2,0.4,5,0.5,0.6]\) > $(date +%m%d%Y\(%H%M\))_twoboxCol.txt &
 
     #
     ##############################################
 
-    # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost,
-    # pushButtonCost, NumCol, qmin, qmax]
+    # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost, NumCol, qmin, qmax]
     parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
     parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
 
@@ -271,7 +270,7 @@ def main():
             latent_entropies = []
 
             count_E = 0
-            while count_E < itermax:
+            while True:
 
                 print("\n The", count_E + 1, "-th iteration of the EM(G) algorithm")
 

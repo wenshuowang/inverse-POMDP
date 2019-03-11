@@ -107,16 +107,16 @@ def twoboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, 
 def main():
     ##############################################
     #
-    #   python -u twobox_main.py [0.3,0.3,0.1,0.1,0.1,0.9,0.6] [0.2,0.2,0.15,0.15]
-    #   \([0.25,0.2,0.15,0.2,0.3,0.8,0.7]\)
-    #   > $(date +%m%d%Y\(%H%M\)).txt &
+    #   python -u twobox_main.py [0.3,0.3,0.1,0.1,0.1,0.4,0.6] [0.2,0.25,0.15,0.12] \([0.25,0.2,0.15,0.2,0.3,0.3,0.7]-[0.4,0.35,0.08,0.15,0.2,0.2,0.5]\) > $(date +%m%d%Y\(%H%M\))_twobox.txt &
     #
     ##############################################
 
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
     # parametersExp = [gamma1, gamma2, epsilon1, epsilon2]
-    parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
-    parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
+    #parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
+    parametersAgent = np.array([0.3,0.3,0.1,0.1,0.1,0.4,0.6])
+    #parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
+    parametersExp = np.array([0.2,0.25,0.15,0.12])
 
     obsN, latN, truthN, datestring = twoboxGenerate(parametersAgent, parametersExp, sample_length = 5000, sample_number = 1, nq = 5)
     #sys.stdout = logger.Logger(datestring)
@@ -128,7 +128,8 @@ def main():
                           'E_EPS': E_EPS,
                           'M_LR_INI': M_LR_INI,
                           'LR_DEC': LR_DEC,
-                          'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
+                          'ParaInitial': [np.array([0.25,0.2,0.15,0.2,0.3,0.3,0.7])]
+                          #'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
 
@@ -333,21 +334,21 @@ def main():
 
                 count_E += 1
 
-                MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
-                MM_para_new_traj.append(para_new_traj)
-                MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
-                MM_log_likelihoods_new.append(log_likelihoods_new)
-                MM_log_likelihoods_com_old.append(log_likelihoods_com_old)    # old posterior, old parameters
-                MM_log_likelihoods_com_new.append(log_likelihoods_com_new)    # old posterior, new parameters
-                MM_latent_entropies.append(latent_entropies)
+            MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
+            MM_para_new_traj.append(para_new_traj)
+            MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
+            MM_log_likelihoods_new.append(log_likelihoods_new)
+            MM_log_likelihoods_com_old.append(log_likelihoods_com_old)    # old posterior, old parameters
+            MM_log_likelihoods_com_new.append(log_likelihoods_com_new)    # old posterior, new parameters
+            MM_latent_entropies.append(latent_entropies)
 
-            NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
-            NN_MM_para_new_traj.append(MM_para_new_traj)
-            NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
-            NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
-            NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)   # old posterior, old parameters
-            NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)   # old posterior, new parameters
-            NN_MM_latent_entropies.append(MM_latent_entropies)
+        NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
+        NN_MM_para_new_traj.append(MM_para_new_traj)
+        NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
+        NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
+        NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)   # old posterior, old parameters
+        NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)   # old posterior, new parameters
+        NN_MM_latent_entropies.append(MM_latent_entropies)
 
 
     #### Save result data and outputs log

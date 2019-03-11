@@ -608,12 +608,12 @@ class oneboxMDPder(oneboxMDP):
         onebox_new.solveMDP_sfm()
         Qaux = oneboxHMM.computeQaux(obs, onebox_new.ThA, onebox_new.softpolicy)
 
-        para1 = [beta + delta, gamma, epsilon, rho, pushButtonCost]
-        one1 = oneboxMDP(self.discount, self.nq, self.nr, self.na, para1)
-        one1.setupMDP()
-        one1.solveMDP_sfm()
-        Qaux1 = oneboxHMM.computeQaux(obs, one1.ThA, one1.softpolicy)
-        dQauxdpara_beta = (Qaux1 - Qaux) / delta
+        # para1 = [beta + delta, gamma, epsilon, rho, pushButtonCost]
+        # one1 = oneboxMDP(self.discount, self.nq, self.nr, self.na, para1)
+        # one1.setupMDP()
+        # one1.solveMDP_sfm()
+        # Qaux1 = oneboxHMM.computeQaux(obs, one1.ThA, one1.softpolicy)
+        # dQauxdpara_beta = (Qaux1 - Qaux) / delta
 
         para1 = [beta, gamma + delta, epsilon, rho, pushButtonCost]
         one1 = oneboxMDP(self.discount, self.nq, self.nr, self.na, para1)
@@ -629,13 +629,13 @@ class oneboxMDPder(oneboxMDP):
         Qaux1 = oneboxHMM.computeQaux(obs, one1.ThA, one1.softpolicy)
         dQauxdpara_epsilon = (Qaux1 - Qaux) / delta
 
-        para1 = [beta, gamma, epsilon, rho + delta, pushButtonCost]
-        one1 = oneboxMDP(self.discount, self.nq, self.nr, self.na, para1)
-        one1.setupMDP()
-        one1.solveMDP_sfm()
-        Qaux1 = oneboxHMM.computeQaux(obs, one1.ThA, one1.softpolicy)
-        dQauxdpara_rho = (Qaux1 - Qaux) / delta
-
+        # para1 = [beta, gamma, epsilon, rho + delta, pushButtonCost]
+        # one1 = oneboxMDP(self.discount, self.nq, self.nr, self.na, para1)
+        # one1.setupMDP()
+        # one1.solveMDP_sfm()
+        # Qaux1 = oneboxHMM.computeQaux(obs, one1.ThA, one1.softpolicy)
+        # dQauxdpara_rho = (Qaux1 - Qaux) / delta
+        #
         para1 = [beta, gamma, epsilon, rho, pushButtonCost + delta]
         one1 = oneboxMDP(self.discount, self.nq, self.nr, self.na, para1)
         one1.setupMDP()
@@ -643,8 +643,8 @@ class oneboxMDPder(oneboxMDP):
         Qaux1 = oneboxHMM.computeQaux(obs, one1.ThA, one1.softpolicy)
         dQauxdpara_r = (Qaux1 - Qaux) / delta
 
-        return dQauxdpara_beta, dQauxdpara_gamma, dQauxdpara_epsilon, dQauxdpara_rho, dQauxdpara_r
-
+        # return dQauxdpara_beta, dQauxdpara_gamma, dQauxdpara_epsilon, dQauxdpara_rho, dQauxdpara_r
+        return 0, dQauxdpara_gamma, dQauxdpara_epsilon, 0, dQauxdpara_r
 
     def dQauxdpara(self, obs, para_new):
 
