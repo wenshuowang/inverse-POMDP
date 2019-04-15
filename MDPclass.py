@@ -445,7 +445,8 @@ class ValueIteration_sfmZW(MDP):
             ''' modified by ZW
             variation = _util.getSpan(self.V - Vprev)
             '''
-            variation = _np.max(_np.abs(self.V - Vprev))   # modified by ZW
+            variation = _util.getSpan(self.V - Vprev)
+            #variation = _np.max(_np.abs(self.V - Vprev))   # modified by ZW
 
             if self.verbose:
                 print(("    %s\t\t  %s" % (self.iter, variation)))

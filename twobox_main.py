@@ -10,9 +10,10 @@ import timeit
 #from twoboxMDPsolver import *
 
 E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
-GD_THRESHOLD = 0.015   # 0.01      # stopping criteria of M-step (gradient descent)
-E_EPS = 10 ** -8                  # stopping criteria of E-step
-M_LR_INI = 2 * 10 ** -5           # initial learning rate in the gradient descent step
+GD_THRESHOLD = 0.05   # 0.01      # stopping criteria of M-step (gradient descent)
+E_EPS = 5 * 10 ** -3                 # stopping criteria of E-step
+#M_LR_INI = float(sys.argv[1])
+M_LR_INI =  100 * 10 ** -5           # initial learning rate in the gradient descent step
 LR_DEC =  4                       # number of times that the learning rate can be reduced
 
 
@@ -105,6 +106,7 @@ def twoboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, 
     return obsN, latN, truthN, datestring
 
 def main():
+    #print(M_LR_INI)
     ##############################################
     #
     #   python -u twobox_main.py [0.3,0.3,0.1,0.1,0.1,0.4,0.6] [0.2,0.25,0.15,0.12] \([0.25,0.2,0.15,0.2,0.3,0.3,0.7]-[0.4,0.35,0.08,0.15,0.2,0.2,0.5]\) > $(date +%m%d%Y\(%H%M\))_twobox.txt &
@@ -114,11 +116,19 @@ def main():
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
     # parametersExp = [gamma1, gamma2, epsilon1, epsilon2]
     #parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
-    parametersAgent = np.array([0.3,0.3,0.1,0.1,0.1,0.4,0.6])
+    parametersAgent = np.array([0.3,0.3,0.1,0.1,0.05,0.2,0.3])
     #parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
-    parametersExp = np.array([0.2,0.25,0.15,0.12])
+    parametersExp = np.array([0.2,0.3,0.05,0.03])
 
     obsN, latN, truthN, datestring = twoboxGenerate(parametersAgent, parametersExp, sample_length = 5000, sample_number = 1, nq = 5)
+
+    # datestring = '04112019(1029)'
+    # dataN_pkl_file = open(datestring + '_dataN_twobox.pkl', 'rb')
+    # dataN_pkl = pickle.load(dataN_pkl_file)
+    # dataN_pkl_file.close()
+    # obsN = dataN_pkl['observations']
+    # latN = dataN_pkl['beliefs']
+
     #sys.stdout = logger.Logger(datestring)
     # output will be both on the screen and in the log file
     # No need to manual interaction to specify parameters in the command line
@@ -128,7 +138,7 @@ def main():
                           'E_EPS': E_EPS,
                           'M_LR_INI': M_LR_INI,
                           'LR_DEC': LR_DEC,
-                          'ParaInitial': [np.array([0.25,0.2,0.15,0.2,0.3,0.3,0.7])]
+                          'ParaInitial': [np.array([0.2,0.25,0.15,0.12,0.2,0.45,0.7])]
                           #'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
@@ -277,7 +287,7 @@ def main():
                 log_likelihoods_com_new.append([])
                 log_likelihoods_new.append([])
 
-                learnrate_ini = M_LR_INI
+                learnrate_ini = M_LR_INI * np.exp(- count_E // 20)
                 learnrate = learnrate_ini
 
                 # Start the gradient descent from the old parameters
@@ -296,10 +306,13 @@ def main():
 
                 while True:
 
-                    derivative_value = twoboxGra.dQauxdpara(obs, parameters_new, vinitial)
+                    # derivative_value = twoboxGra.dQauxdpara(obs, parameters_new, vinitial)
+                    # # vinitial is value from previous iteration, this is for computational efficiency
+                    # para_temp = parameters_new + learnrate * np.array(derivative_value[:-1])
+                    # vinitial = derivative_value[-1]  # value iteration starts with value from previous iteration
+                    derivative_value = twoboxGra.dQauxdpara_sim(obs, parameters_new)
                     # vinitial is value from previous iteration, this is for computational efficiency
-                    para_temp = parameters_new + learnrate * np.array(derivative_value[:-1])
-                    vinitial = derivative_value[-1]  # value iteration starts with value from previous iteration
+                    para_temp = parameters_new + learnrate * np.array(derivative_value)
 
                     ## Check the ECDLL (old posterior, new parameters)
                     twobox_new = twoboxMDP(discount, nq, nr, na, nl, para_temp)
@@ -362,7 +375,7 @@ def main():
                        'Complete_LogLikelihood_Mstep': NN_MM_log_likelihoods_com_new,
                        'Latent_entropies': NN_MM_latent_entropies
                        }
-    output = open(datestring + '_EM_twobox' + '.pkl', 'wb')
+    output = open(datestring + '_EM_twobox1' + '.pkl', 'wb')
     pickle.dump(Experiment_dict, output)
     output.close()
 
@@ -373,7 +386,7 @@ def main():
     #                       'M_LR_INI': M_LR_INI,
     #                       'LR_DEC': LR_DEC,
     #                       'ParaInitial': parameters_iniSet}
-    output1 = open(datestring + '_ParameterMain_twobox' + '.pkl', 'wb')
+    output1 = open(datestring + '_ParameterMain_twobox1' + '.pkl', 'wb')
     pickle.dump(parameterMain_dict, output1)
     output1.close()
 
