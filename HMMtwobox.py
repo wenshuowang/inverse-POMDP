@@ -75,6 +75,8 @@ class HMMtwobox:
                 np.ix_(self._states(rew[t-1], loc[t-1]), self._states(rew[t], loc[t]))]) \
                            * self.B[act[t], self._states(rew[t], loc[t])]
             scale[t] = np.sum(alpha[:, t])
+            if scale[t] == 0:
+                print(t)
             alpha[:, t] = alpha[:, t] / scale[t]
 
         return alpha, scale

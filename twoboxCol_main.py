@@ -3,11 +3,13 @@ from HMMtwoboxCol import *
 import pickle
 import sys
 from datetime import datetime
+import os
+path = os.getcwd()
 
 E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.1   # 0.01      # stopping criteria of M-step (gradient descent)
-E_EPS = 10 ** -8                  # stopping criteria of E-step
-M_LR_INI = 1 * 10 ** -9           # initial learning rate in the gradient descent step
+E_EPS = 10 ** -2                  # stopping criteria of E-step
+M_LR_INI = 1 * 10 ** -8           # initial learning rate in the gradient descent step
 LR_DEC =  3                       # number of times that the learning rate can be reduced
 
 
@@ -142,17 +144,27 @@ def main():
     #
     ##############################################
 
+    datestring = datetime.strftime(datetime.now(), '%m%d%Y(%H%M)')  # current time used to set file name
+
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost, NumCol, qmin, qmax]
     parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
     parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
 
     #parameters_gen = [0.1,0.1,0.01,0.01,0.05,0.2,0.3,5,0.4,0.6]
 
-    obsN, latN, truthN, datestring = twoboxColGenerate(parametersAgent, parametersExp, sample_length = 5000, sample_number = 1, nq = 5)
+    #obsN, latN, truthN, datestring = twoboxColGenerate(parametersAgent, parametersExp, sample_length = 5000, sample_number = 1, nq = 5)
     # sys.stdout = logger.Logger(datestring)
     # output will be both on the screen and in the log file
     # No need to manual interaction to specify parameters in the command line
     # but the log file will be written at the end of the execution.
+
+    print(path)
+    dataN_pkl_file = open(path + '/Results/04222019(1701)_dataN_twoboxCol.pkl', 'rb')
+    dataN_pkl = pickle.load(dataN_pkl_file)
+    dataN_pkl_file.close()
+    obsN = dataN_pkl['observations']
+    latN = dataN_pkl['beliefs']
+
 
     parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
                           'GD_THRESHOLD': GD_THRESHOLD,
@@ -161,6 +173,8 @@ def main():
                           'LR_DEC': LR_DEC,
                           'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in
                                           sys.argv[3].strip('()').split('-')]
+                          #'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in
+                          #                sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
 
@@ -172,7 +186,8 @@ def main():
     parameters_iniSet = parameterMain_dict['ParaInitial']
 
     ### read real para from data file
-    pkl_parafile = open(datestring + '_para_twoboxCol' + '.pkl', 'rb')
+    #pkl_parafile = open(datestring + '_para_twoboxCol' + '.pkl', 'rb')
+    pkl_parafile = open(path + '/Results/04222019(1701)_para_twoboxCol' + '.pkl', 'rb')
     para_pkl = pickle.load(pkl_parafile)
     pkl_parafile.close()
 
