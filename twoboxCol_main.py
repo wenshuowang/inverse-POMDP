@@ -10,8 +10,8 @@ E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.1   # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -2                  # stopping criteria of E-step
 M_LR_INI = 1 * 10 ** -8           # initial learning rate in the gradient descent step
-LR_DEC =  3                       # number of times that the learning rate can be reduced
-
+LR_DEC =  1 #3                       # number of times that the learning rate can be reduced
+SaveEvery = 1  #50
 
 def twoboxColGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
     # datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
@@ -165,7 +165,7 @@ def main():
     obsN = dataN_pkl['observations']
     latN = dataN_pkl['beliefs']
 
-
+    ######## Hyper-parameters ###############################
     parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
                           'GD_THRESHOLD': GD_THRESHOLD,
                           'E_EPS': E_EPS,
@@ -177,6 +177,12 @@ def main():
                           #                sys.argv[3].strip('()').split('-')]
                           # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                           }
+
+    output1 = open(datestring + '_ParameterMain_twoboxCol' + '.pkl', 'wb')
+    pickle.dump(parameterMain_dict, output1)
+    output1.close()
+    ##############################################################
+
 
     ### Choose which sample is used for inference
     sampleIndex = [0]
@@ -240,13 +246,13 @@ def main():
     ### EM algorithm for parameter estimation
     print("\nEM algorithm begins ...")
     # NN denotes multiple data set, and MM denotes multiple initial points
-    NN_MM_para_old_traj = []
-    NN_MM_para_new_traj = []
-    NN_MM_log_likelihoods_old = []
-    NN_MM_log_likelihoods_new = []
-    NN_MM_log_likelihoods_com_old = []  # old posterior, old parameters
-    NN_MM_log_likelihoods_com_new = []  # old posterior, new parameters
-    NN_MM_latent_entropies = []
+    # NN_MM_para_old_traj = []
+    # NN_MM_para_new_traj = []
+    # NN_MM_log_likelihoods_old = []
+    # NN_MM_log_likelihoods_new = []
+    # NN_MM_log_likelihoods_com_old = []  # old posterior, old parameters
+    # NN_MM_log_likelihoods_com_new = []  # old posterior, new parameters
+    # NN_MM_latent_entropies = []
 
     for nn in range(NN):
 
@@ -258,13 +264,13 @@ def main():
 
         MM = len(parameters_iniSet)
 
-        MM_para_old_traj = []
-        MM_para_new_traj = []
-        MM_log_likelihoods_old = []
-        MM_log_likelihoods_new = []
-        MM_log_likelihoods_com_old = []  # old posterior, old parameters
-        MM_log_likelihoods_com_new = []  # old posterior, new parameters
-        MM_latent_entropies = []
+        # MM_para_old_traj = []
+        # MM_para_new_traj = []
+        # MM_log_likelihoods_old = []
+        # MM_log_likelihoods_new = []
+        # MM_log_likelihoods_com_old = []  # old posterior, old parameters
+        # MM_log_likelihoods_com_new = []  # old posterior, new parameters
+        # MM_latent_entropies = []
 
         for mm in range(MM):
             parameters_old = np.copy(parameters_iniSet[mm])
@@ -401,42 +407,54 @@ def main():
                         if learnrate < learnrate_ini / (2 ** LR_DEC):
                             break
 
+                # every 50 iterations, download data
+                if count_E % SaveEvery == 0:
+                    Experiment_dict = {'ParameterTrajectory_Estep': para_old_traj,
+                                       'ParameterTrajectory_Mstep': para_new_traj,
+                                       'LogLikelihood_Estep': log_likelihoods_old,
+                                       'LogLikelihood_Mstep': log_likelihoods_new,
+                                       'Complete_LogLikelihood_Estep': log_likelihoods_com_old,
+                                       'Complete_LogLikelihood_Mstep': log_likelihoods_com_new,
+                                       'Latent_entropies': latent_entropies
+                                       }
+                    output = open(datestring + '_' + str(NN) + '_' + str(MM) + '_' + str(count_E + 1) + '_EM_twoboxCol' + '.pkl', 'wb')
+                    pickle.dump(Experiment_dict, output)
+                    output.close()
+
                 count_E += 1
 
-            MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
-            MM_para_new_traj.append(para_new_traj)
-            MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
-            MM_log_likelihoods_new.append(log_likelihoods_new)
-            MM_log_likelihoods_com_old.append(log_likelihoods_com_old)  # old posterior, old parameters
-            MM_log_likelihoods_com_new.append(log_likelihoods_com_new)  # old posterior, new parameters
-            MM_latent_entropies.append(latent_entropies)
-
-        NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
-        NN_MM_para_new_traj.append(MM_para_new_traj)
-        NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
-        NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
-        NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)  # old posterior, old parameters
-        NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)  # old posterior, new parameters
-        NN_MM_latent_entropies.append(MM_latent_entropies)
+        #     MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
+        #     MM_para_new_traj.append(para_new_traj)
+        #     MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
+        #     MM_log_likelihoods_new.append(log_likelihoods_new)
+        #     MM_log_likelihoods_com_old.append(log_likelihoods_com_old)  # old posterior, old parameters
+        #     MM_log_likelihoods_com_new.append(log_likelihoods_com_new)  # old posterior, new parameters
+        #     MM_latent_entropies.append(latent_entropies)
+        #
+        # NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
+        # NN_MM_para_new_traj.append(MM_para_new_traj)
+        # NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
+        # NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
+        # NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)  # old posterior, old parameters
+        # NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)  # old posterior, new parameters
+        # NN_MM_latent_entropies.append(MM_latent_entropies)
 
     #### Save result data and outputs log
 
     ## save the running data
-    Experiment_dict = {'ParameterTrajectory_Estep': NN_MM_para_old_traj,
-                       'ParameterTrajectory_Mstep': NN_MM_para_new_traj,
-                       'LogLikelihood_Estep': NN_MM_log_likelihoods_old,
-                       'LogLikelihood_Mstep': NN_MM_log_likelihoods_new,
-                       'Complete_LogLikelihood_Estep': NN_MM_log_likelihoods_com_old,
-                       'Complete_LogLikelihood_Mstep': NN_MM_log_likelihoods_com_new,
-                       'Latent_entropies': NN_MM_latent_entropies
-                       }
-    output = open(datestring + '_EM_twoboxCol' + '.pkl', 'wb')
-    pickle.dump(Experiment_dict, output)
-    output.close()
+    # Experiment_dict = {'ParameterTrajectory_Estep': NN_MM_para_old_traj,
+    #                    'ParameterTrajectory_Mstep': NN_MM_para_new_traj,
+    #                    'LogLikelihood_Estep': NN_MM_log_likelihoods_old,
+    #                    'LogLikelihood_Mstep': NN_MM_log_likelihoods_new,
+    #                    'Complete_LogLikelihood_Estep': NN_MM_log_likelihoods_com_old,
+    #                    'Complete_LogLikelihood_Mstep': NN_MM_log_likelihoods_com_new,
+    #                    'Latent_entropies': NN_MM_latent_entropies
+    #                    }
+    # output = open(datestring + '_EM_twoboxCol' + '.pkl', 'wb')
+    # pickle.dump(Experiment_dict, output)
+    # output.close()
 
-    output1 = open(datestring + '_ParameterMain_twoboxCol' + '.pkl', 'wb')
-    pickle.dump(parameterMain_dict, output1)
-    output1.close()
+
 
     print("finish")
 
