@@ -192,7 +192,7 @@ def main():
 
     ### read real para from data file
     #pkl_parafile = open(datestring + '_para_twoboxCol' + '.pkl', 'rb')
-    pkl_parafile = open(path + '/Results/04222019(1701)_para_twoboxCol' + '.pkl', 'rb')
+    pkl_parafile = open(path + '/Results/04302019(0246)_para_twoboxCol' + '.pkl', 'rb')
     para_pkl = pickle.load(pkl_parafile)
     pkl_parafile.close()
 
