@@ -7,11 +7,11 @@ import os
 path = os.getcwd()
 
 E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
-GD_THRESHOLD = 0.1   # 0.01      # stopping criteria of M-step (gradient descent)
+GD_THRESHOLD = 0.01   # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -2                  # stopping criteria of E-step
-M_LR_INI = 1 * 10 ** -8           # initial learning rate in the gradient descent step
-LR_DEC =  1 #3                       # number of times that the learning rate can be reduced
-SaveEvery = 1  #50
+M_LR_INI = 2  * 10 ** -5           # initial learning rate in the gradient descent step
+LR_DEC =  4                       # number of times that the learning rate can be reduced
+SaveEvery = 10
 
 def twoboxColGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, nl = 3, na = 5, discount = 0.99):
     # datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
@@ -158,8 +158,7 @@ def main():
     # No need to manual interaction to specify parameters in the command line
     # but the log file will be written at the end of the execution.
 
-    print(path)
-    dataN_pkl_file = open(path + '/Results/04222019(1701)_dataN_twoboxCol.pkl', 'rb')
+    dataN_pkl_file = open(path + '/Results/04302019(0246)_dataN_twoboxCol.pkl', 'rb')
     dataN_pkl = pickle.load(dataN_pkl_file)
     dataN_pkl_file.close()
     obsN = dataN_pkl['observations']
@@ -408,7 +407,7 @@ def main():
                             break
 
                 # every 50 iterations, download data
-                if count_E % SaveEvery == 0:
+                if (count_E + 1) % SaveEvery == 0:
                     Experiment_dict = {'ParameterTrajectory_Estep': para_old_traj,
                                        'ParameterTrajectory_Mstep': para_new_traj,
                                        'LogLikelihood_Estep': log_likelihoods_old,
@@ -422,6 +421,19 @@ def main():
                     output.close()
 
                 count_E += 1
+
+            # save the remainings (The last one contains all the parameters in the trajectory)
+            Experiment_dict = {'ParameterTrajectory_Estep': para_old_traj,
+                               'ParameterTrajectory_Mstep': para_new_traj,
+                               'LogLikelihood_Estep': log_likelihoods_old,
+                               'LogLikelihood_Mstep': log_likelihoods_new,
+                               'Complete_LogLikelihood_Estep': log_likelihoods_com_old,
+                               'Complete_LogLikelihood_Mstep': log_likelihoods_com_new,
+                               'Latent_entropies': latent_entropies
+                               }
+            output = open(datestring + '_' + str(NN) + '_' + str(MM) + '_' + str(count_E + 1) + '_EM_twoboxCol' + '.pkl', 'wb')
+            pickle.dump(Experiment_dict, output)
+            output.close()
 
         #     MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
         #     MM_para_new_traj.append(para_new_traj)
