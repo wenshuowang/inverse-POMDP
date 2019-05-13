@@ -125,12 +125,12 @@ obsN = np.dstack([act, rew, loc])
 obs = obsN[0]
 
 E_MAX_ITER = 500       # 100      # maximum number of iterations of E-step
-GD_THRESHOLD = 0.05   # 0.01      # stopping criteria of M-step (gradient descent)
-E_EPS = 1                         # stopping criteria of E-step
+GD_THRESHOLD = 10 #0.5   # 0.01      # stopping criteria of M-step (gradient descent)
+E_EPS = 0.5                         # stopping criteria of E-step
 #M_LR_INI = float(sys.argv[1])
-M_LR_INI =  1 * 10 ** -5         # initial learning rate in the gradient descent step
+M_LR_INI =  1 * 10 ** -6         # initial learning rate in the gradient descent step
 LR_DEC =  4                       # number of times that the learning rate can be reduced
-
+SaveEvery = 50
 # No need to manual interaction to specify parameters in the command line
 #parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
 parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
@@ -138,10 +138,15 @@ parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
                       'E_EPS': E_EPS,
                       'M_LR_INI': M_LR_INI,
                       'LR_DEC': LR_DEC,
+                      'SaveEvery': SaveEvery,
                       'ParaInitial': [np.array([0.2, 0.25, 0, 0, 0.2, 0.3, 0.5])]
                       # 'ParaInitial': [np.array(list(map(float, i.strip('[]').split(',')))) for i in sys.argv[3].strip('()').split('-')]
                       # Initial parameter is a set that contains arrays of parameters, here only consider one initial point
                       }
+output1 = open(path  + '/' + datestring + '_real_ParameterMain_twobox' + '.pkl', 'wb')
+pickle.dump(parameterMain_dict, output1)
+output1.close()
+
 
 ### Choose which sample is used for inference
 sampleIndex = [0]
@@ -161,13 +166,13 @@ print("\nThe initial points for estimation are:", parameters_iniSet)
 #### EM algorithm for parameter estimation
 print("\nEM algorithm begins ...")
 # NN denotes multiple data set, and MM denotes multiple initial points
-NN_MM_para_old_traj = []
-NN_MM_para_new_traj = []
-NN_MM_log_likelihoods_old = []
-NN_MM_log_likelihoods_new = []
-NN_MM_log_likelihoods_com_old = []    # old posterior, old parameters
-NN_MM_log_likelihoods_com_new = []    # old posterior, new parameters
-NN_MM_latent_entropies = []
+# NN_MM_para_old_traj = []
+# NN_MM_para_new_traj = []
+# NN_MM_log_likelihoods_old = []
+# NN_MM_log_likelihoods_new = []
+# NN_MM_log_likelihoods_com_old = []    # old posterior, old parameters
+# NN_MM_log_likelihoods_com_new = []    # old posterior, new parameters
+# NN_MM_latent_entropies = []
 
 
 for nn in range(NN):
@@ -180,13 +185,13 @@ for nn in range(NN):
 
     MM = len(parameters_iniSet)
 
-    MM_para_old_traj = []
-    MM_para_new_traj = []
-    MM_log_likelihoods_old = []
-    MM_log_likelihoods_new = []
-    MM_log_likelihoods_com_old = []    # old posterior, old parameters
-    MM_log_likelihoods_com_new = []    # old posterior, new parameters
-    MM_latent_entropies = []
+    # MM_para_old_traj = []
+    # MM_para_new_traj = []
+    # MM_log_likelihoods_old = []
+    # MM_log_likelihoods_new = []
+    # MM_log_likelihoods_com_old = []    # old posterior, old parameters
+    # MM_log_likelihoods_com_new = []    # old posterior, new parameters
+    # MM_latent_entropies = []
 
     for mm in range(MM):
         parameters_old = np.copy(parameters_iniSet[mm])
@@ -207,7 +212,7 @@ for nn in range(NN):
         latent_entropies = []
 
         count_E = 0
-        while count_E < itermax:
+        while True:
 
             print("The", count_E + 1, "-th iteration of the EM(G) algorithm")
 
@@ -312,23 +317,51 @@ for nn in range(NN):
                     if learnrate < learnrate_ini / (2 ** LR_DEC):
                         break
 
+            # every 50 iterations, download data
+            if (count_E + 1) % SaveEvery == 0:
+                Experiment_dict = {'ParameterTrajectory_Estep': para_old_traj,
+                                   'ParameterTrajectory_Mstep': para_new_traj,
+                                   'LogLikelihood_Estep': log_likelihoods_old,
+                                   'LogLikelihood_Mstep': log_likelihoods_new,
+                                   'Complete_LogLikelihood_Estep': log_likelihoods_com_old,
+                                   'Complete_LogLikelihood_Mstep': log_likelihoods_com_new,
+                                   'Latent_entropies': latent_entropies
+                                   }
+                output = open(path + '/' + datestring + '_' + str(count_E + 1) + '_real_EM_twobox' + '.pkl', 'wb')
+                pickle.dump(Experiment_dict, output)
+                output.close()
+
             count_E += 1
 
-        MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
-        MM_para_new_traj.append(para_new_traj)
-        MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
-        MM_log_likelihoods_new.append(log_likelihoods_new)
-        MM_log_likelihoods_com_old.append(log_likelihoods_com_old)    # old posterior, old parameters
-        MM_log_likelihoods_com_new.append(log_likelihoods_com_new)    # old posterior, new parameters
-        MM_latent_entropies.append(latent_entropies)
 
-    NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
-    NN_MM_para_new_traj.append(MM_para_new_traj)
-    NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
-    NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
-    NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)   # old posterior, old parameters
-    NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)   # old posterior, new parameters
-    NN_MM_latent_entropies.append(MM_latent_entropies)
+        # save the remainings
+        Experiment_dict = {'ParameterTrajectory_Estep': para_old_traj,
+                           'ParameterTrajectory_Mstep': para_new_traj,
+                           'LogLikelihood_Estep': log_likelihoods_old,
+                           'LogLikelihood_Mstep': log_likelihoods_new,
+                           'Complete_LogLikelihood_Estep': log_likelihoods_com_old,
+                           'Complete_LogLikelihood_Mstep': log_likelihoods_com_new,
+                           'Latent_entropies': latent_entropies
+                           }
+        output = open(path + '/' + datestring + '_' + str(count_E + 1) + '_real_EM_twobox' + '.pkl', 'wb')
+        pickle.dump(Experiment_dict, output)
+        output.close()
+
+    #     MM_para_old_traj.append(para_old_traj)  # parameter trajectories for a particular set of data
+    #     MM_para_new_traj.append(para_new_traj)
+    #     MM_log_likelihoods_old.append(log_likelihoods_old)  # likelihood trajectories for a particular set of data
+    #     MM_log_likelihoods_new.append(log_likelihoods_new)
+    #     MM_log_likelihoods_com_old.append(log_likelihoods_com_old)    # old posterior, old parameters
+    #     MM_log_likelihoods_com_new.append(log_likelihoods_com_new)    # old posterior, new parameters
+    #     MM_latent_entropies.append(latent_entropies)
+    #
+    # NN_MM_para_old_traj.append(MM_para_old_traj)  # parameter trajectories for all data
+    # NN_MM_para_new_traj.append(MM_para_new_traj)
+    # NN_MM_log_likelihoods_old.append(MM_log_likelihoods_old)  # likelihood trajectories for
+    # NN_MM_log_likelihoods_new.append(MM_log_likelihoods_new)
+    # NN_MM_log_likelihoods_com_old.append(MM_log_likelihoods_com_old)   # old posterior, old parameters
+    # NN_MM_log_likelihoods_com_new.append(MM_log_likelihoods_com_new)   # old posterior, new parameters
+    # NN_MM_latent_entropies.append(MM_latent_entropies)
 
 
 
@@ -338,174 +371,173 @@ for nn in range(NN):
 #               save data
 #
 ###########################################################
-path = os.getcwd()
 
-## save the running data
-Experiment_dict = {'ParameterTrajectory_Estep': NN_MM_para_old_traj,
-                   'ParameterTrajectory_Mstep': NN_MM_para_new_traj,
-                   'LogLikelihood_Estep': NN_MM_log_likelihoods_old,
-                   'LogLikelihood_Mstep': NN_MM_log_likelihoods_new,
-                   'Complete_LogLikelihood_Estep': NN_MM_log_likelihoods_com_old,
-                   'Complete_LogLikelihood_Mstep': NN_MM_log_likelihoods_com_new,
-                   'Latent_entropies': NN_MM_latent_entropies
-                   }
-output = open(path  + '/' + datestring + '_real_EM_twobox' + '.pkl', 'wb')
-pickle.dump(Experiment_dict, output)
-output.close()
-
-## save running parameters
-# parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
-#                       'GD_THRESHOLD': GD_THRESHOLD,
-#                       'E_EPS': E_EPS,
-#                       'M_LR_INI': M_LR_INI,
-#                       'LR_DEC': LR_DEC,
-#                       'ParaInitial': parameters_iniSet}
-output1 = open(path  + '/' + datestring + '_real_ParameterMain_twobox' + '.pkl', 'wb')
-pickle.dump(parameterMain_dict, output1)
-output1.close()
+# ## save the running data
+# Experiment_dict = {'ParameterTrajectory_Estep': NN_MM_para_old_traj,
+#                    'ParameterTrajectory_Mstep': NN_MM_para_new_traj,
+#                    'LogLikelihood_Estep': NN_MM_log_likelihoods_old,
+#                    'LogLikelihood_Mstep': NN_MM_log_likelihoods_new,
+#                    'Complete_LogLikelihood_Estep': NN_MM_log_likelihoods_com_old,
+#                    'Complete_LogLikelihood_Mstep': NN_MM_log_likelihoods_com_new,
+#                    'Latent_entropies': NN_MM_latent_entropies
+#                    }
+# output = open(path  + '/' + datestring + '_real_EM_twobox' + '.pkl', 'wb')
+# pickle.dump(Experiment_dict, output)
+# output.close()
+#
+# ## save running parameters
+# # parameterMain_dict = {'E_MAX_ITER': E_MAX_ITER,
+# #                       'GD_THRESHOLD': GD_THRESHOLD,
+# #                       'E_EPS': E_EPS,
+# #                       'M_LR_INI': M_LR_INI,
+# #                       'LR_DEC': LR_DEC,
+# #                       'ParaInitial': parameters_iniSet}
+# output1 = open(path  + '/' + datestring + '_real_ParameterMain_twobox' + '.pkl', 'wb')
+# pickle.dump(parameterMain_dict, output1)
+# output1.close()
 
 print("finish")
 
 
 
-###########################################################
+# ###########################################################
+# #
+# #         retrieve data and look into contour
+# #
+# ###########################################################
+# EM_pkl_file = open(path + '/real_EM_twobox.pkl', 'rb')
+# EM_pkl = pickle.load(EM_pkl_file)
+# EM_pkl_file.close()
 #
-#         retrieve data and look into contour
+# ParameterMain_pkl_file = open(path + '/real_ParameterMain_twobox.pkl', 'rb')
+# ParameterMain_pkl = pickle.load(ParameterMain_pkl_file)
+# ParameterMain_pkl_file.close()
 #
-###########################################################
-EM_pkl_file = open(path + '/real_EM_twobox.pkl', 'rb')
-EM_pkl = pickle.load(EM_pkl_file)
-EM_pkl_file.close()
-
-ParameterMain_pkl_file = open(path + '/real_ParameterMain_twobox.pkl', 'rb')
-ParameterMain_pkl = pickle.load(ParameterMain_pkl_file)
-ParameterMain_pkl_file.close()
-
-NN_MM_para_old_traj = EM_pkl['ParameterTrajectory_Estep']
-NN_MM_para_new_traj = EM_pkl['ParameterTrajectory_Mstep']
-NN_MM_log_likelihoods_old = EM_pkl['LogLikelihood_Estep']
-NN_MM_log_likelihoods_new = EM_pkl['LogLikelihood_Mstep']
-NN_MM_log_likelihoods_com_old = EM_pkl['Complete_LogLikelihood_Estep']
-NN_MM_log_likelihoods_com_new = EM_pkl['Complete_LogLikelihood_Mstep']
-NN_MM_latent_entropies = EM_pkl['Latent_entropies']
-
-para_traj = [k for i in NN_MM_para_new_traj[0] for j in i  for k in j]
-point = np.copy(para_traj)
-
-
-
-###################################################################
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
-pca = PCA(n_components = 2)
-pca.fit(point - point[-1])
-projectionMat = pca.components_
-print(projectionMat)
-
-# Contour of the likelihood
-step1 = 0.04  # for u (1st principle component)
-step2 = 0.04  # for v (2nd principle component)
-N1 = 25
-N2 = 10
-uOffset =  - step1 * N1 / 2
-vOffset =  - step2 * N2 / 2
-
-uValue = np.zeros(N1)
-vValue = np.zeros(N2)
-Qaux1 = np.zeros((N2, N1))  # Likelihood with ground truth latent
-Qaux2 = np.zeros((N2, N1))  # Expected complete data likelihood
-Qaux3 = np.zeros((N2, N1))  # Entropy of latent posterior
-para_slice = []
-
-for i in range(N1):
-    uValue[i] = step1 * (i) + uOffset
-    for j in range(N2):
-        vValue[j] = step2 * (j) + vOffset
-
-        para_slicePoints = point[-1] + uValue[i] * projectionMat[0] + vValue[j] * projectionMat[1]
-        para_slice.append(para_slicePoints)
-        para = np.copy(para_slicePoints)
-        # print(para)
-
-        twobox = twoboxMDP(discount, nq, nr, na, nl, para)
-        twobox.setupMDP()
-        twobox.solveMDP_sfm()
-        ThA = twobox.ThA
-        policy = twobox.softpolicy
-        pi = np.ones(nq * nq) / nq / nq  # initialize the estimation of the belief state
-        twoboxHMM = HMMtwobox(ThA, policy, pi)
-
-        # Qaux1[j, i] = twoboxHMM.likelihood(lat, obs, ThA, policy)  #given latent state
-        Qaux2[j, i] = twoboxHMM.computeQaux(obs, ThA, policy)
-        Qaux3[j, i] = twoboxHMM.latent_entr(obs)
-
-Loglikelihood = Qaux2 + Qaux3
-
-
-Contour_dict = {'uValue': uValue, 'vValue': vValue, 'Qaux2': Qaux2, 'Qaux3': Qaux3}
-output = open(path  + '/' + datestring + '_real_contour' + '.pkl', 'wb')
-pickle.dump(Contour_dict, output)
-output.close()
-
-# project the trajectories onto the plane
-point_2d = projectionMat.dot((point - point[-1]).T).T
-# true parameters projected onto the plane
-#true_2d = projectionMat.dot(parameters - point[-1])
-fig, ax = plt.subplots(figsize = (10, 10))
-uValuemesh, vValuemesh = np.meshgrid(uValue, vValue)
-cs3 = plt.contour(uValuemesh, vValuemesh, Loglikelihood,
-                  np.arange(np.min(Loglikelihood), np.max(Loglikelihood), 5), cmap='jet')
-#plt.xticks(np.arange(0, 1, 0.1))
-#plt.yticks(np.arange(0, 1, 0.1))
-plt.plot(point_2d[:, 0], point_2d[:, 1], marker='.', color = 'b')   # projected trajectories
-plt.plot(point_2d[-1, 0], point_2d[-1, 1], marker='*', color = 'g', markersize = 10)        # final point
-#plt.plot(true_2d[0], true_2d[1], marker='o', color = 'g')           # true
-ax.grid()
-ax.set_title('Likelihood of observed data')
-plt.xlabel(r'$u \mathbf{\theta}$', fontsize = 10)
-plt.ylabel(r'$v \mathbf{\theta}$', fontsize = 10)
-plt.clabel(cs3, inline=1, fontsize=10)
-plt.colorbar()
-plt.show()
-
-#################################################################
-showlen = 200
-showT = range(1000,1000+showlen)
-para_est = point[-1]
-twobox_est = twoboxMDP(discount, nq, nr, na, nl, para_est)
-twobox_est.setupMDP()
-twobox_est.solveMDP_sfm()
-ThA = twobox_est.ThA
-policy = twobox_est.softpolicy
-pi = np.ones(nq * nq)/ nq /nq  # initialize the estimation of the belief state
-twoboxHMM_est = HMMtwobox(ThA, policy, pi)
-
-alpha_est, scale_est = twoboxHMM_est.forward_scale(obs)
-beta_est = twoboxHMM_est.backward_scale(obs, scale_est)
-gamma_est = twoboxHMM_est.compute_gamma(alpha_est, beta_est)
-xi_est = twoboxHMM_est.compute_xi(alpha_est, beta_est, obs)
-
-#lat_compound = nq * lat[:, 0] + lat[:, 1]
-
-fig, ax = plt.subplots(figsize= (20, 10))
-plt.imshow(gamma_est[:, showT], interpolation='Nearest', cmap='gray')
-#plt.plot(lat_compound[showT], color = 'r',marker ='.', markersize = 15)
-plt.xticks(np.arange(0, showlen, 10))
-plt.xlabel('time')
-plt.ylabel('belief state')
-plt.show()
-
-belief1_est = np.sum(np.reshape(gamma_est[:, showT].T, (showlen, nq, nq)), axis = 2)
-belief2_est = np.sum(np.reshape(gamma_est[:, showT].T, (showlen, nq, nq)), axis = 1)
-
-fig = plt.figure(figsize= (20, 4))
-ax1 = fig.add_subplot(211)
-ax1.imshow(belief1_est.T, interpolation='Nearest', cmap='gray')
-ax1.set(title = 'belief of box 1 based on estimated parameters')
-ax2 = fig.add_subplot(212)
-ax2.imshow(belief2_est.T, interpolation='Nearest', cmap='gray')
-ax2.set(title = 'belief of box 2 based on estimated parameters')
-plt.show()
+# NN_MM_para_old_traj = EM_pkl['ParameterTrajectory_Estep']
+# NN_MM_para_new_traj = EM_pkl['ParameterTrajectory_Mstep']
+# NN_MM_log_likelihoods_old = EM_pkl['LogLikelihood_Estep']
+# NN_MM_log_likelihoods_new = EM_pkl['LogLikelihood_Mstep']
+# NN_MM_log_likelihoods_com_old = EM_pkl['Complete_LogLikelihood_Estep']
+# NN_MM_log_likelihoods_com_new = EM_pkl['Complete_LogLikelihood_Mstep']
+# NN_MM_latent_entropies = EM_pkl['Latent_entropies']
+#
+# para_traj = [k for i in NN_MM_para_new_traj[0] for j in i  for k in j]
+# point = np.copy(para_traj)
+#
+#
+#
+# ###################################################################
+# from sklearn.decomposition import PCA
+# import matplotlib.pyplot as plt
+# pca = PCA(n_components = 2)
+# pca.fit(point - point[-1])
+# projectionMat = pca.components_
+# print(projectionMat)
+#
+# # Contour of the likelihood
+# step1 = 0.04  # for u (1st principle component)
+# step2 = 0.04  # for v (2nd principle component)
+# N1 = 25
+# N2 = 10
+# uOffset =  - step1 * N1 / 2
+# vOffset =  - step2 * N2 / 2
+#
+# uValue = np.zeros(N1)
+# vValue = np.zeros(N2)
+# Qaux1 = np.zeros((N2, N1))  # Likelihood with ground truth latent
+# Qaux2 = np.zeros((N2, N1))  # Expected complete data likelihood
+# Qaux3 = np.zeros((N2, N1))  # Entropy of latent posterior
+# para_slice = []
+#
+# for i in range(N1):
+#     uValue[i] = step1 * (i) + uOffset
+#     for j in range(N2):
+#         vValue[j] = step2 * (j) + vOffset
+#
+#         para_slicePoints = point[-1] + uValue[i] * projectionMat[0] + vValue[j] * projectionMat[1]
+#         para_slice.append(para_slicePoints)
+#         para = np.copy(para_slicePoints)
+#         # print(para)
+#
+#         twobox = twoboxMDP(discount, nq, nr, na, nl, para)
+#         twobox.setupMDP()
+#         twobox.solveMDP_sfm()
+#         ThA = twobox.ThA
+#         policy = twobox.softpolicy
+#         pi = np.ones(nq * nq) / nq / nq  # initialize the estimation of the belief state
+#         twoboxHMM = HMMtwobox(ThA, policy, pi)
+#
+#         # Qaux1[j, i] = twoboxHMM.likelihood(lat, obs, ThA, policy)  #given latent state
+#         Qaux2[j, i] = twoboxHMM.computeQaux(obs, ThA, policy)
+#         Qaux3[j, i] = twoboxHMM.latent_entr(obs)
+#
+# Loglikelihood = Qaux2 + Qaux3
+#
+#
+# Contour_dict = {'uValue': uValue, 'vValue': vValue, 'Qaux2': Qaux2, 'Qaux3': Qaux3}
+# output = open(path  + '/' + datestring + '_real_contour' + '.pkl', 'wb')
+# pickle.dump(Contour_dict, output)
+# output.close()
+#
+# # project the trajectories onto the plane
+# point_2d = projectionMat.dot((point - point[-1]).T).T
+# # true parameters projected onto the plane
+# #true_2d = projectionMat.dot(parameters - point[-1])
+# fig, ax = plt.subplots(figsize = (10, 10))
+# uValuemesh, vValuemesh = np.meshgrid(uValue, vValue)
+# cs3 = plt.contour(uValuemesh, vValuemesh, Loglikelihood,
+#                   np.arange(np.min(Loglikelihood), np.max(Loglikelihood), 5), cmap='jet')
+# #plt.xticks(np.arange(0, 1, 0.1))
+# #plt.yticks(np.arange(0, 1, 0.1))
+# plt.plot(point_2d[:, 0], point_2d[:, 1], marker='.', color = 'b')   # projected trajectories
+# plt.plot(point_2d[-1, 0], point_2d[-1, 1], marker='*', color = 'g', markersize = 10)        # final point
+# #plt.plot(true_2d[0], true_2d[1], marker='o', color = 'g')           # true
+# ax.grid()
+# ax.set_title('Likelihood of observed data')
+# plt.xlabel(r'$u \mathbf{\theta}$', fontsize = 10)
+# plt.ylabel(r'$v \mathbf{\theta}$', fontsize = 10)
+# plt.clabel(cs3, inline=1, fontsize=10)
+# plt.colorbar()
+# plt.show()
+#
+# #################################################################
+# showlen = 200
+# showT = range(1000,1000+showlen)
+# para_est = point[-1]
+# twobox_est = twoboxMDP(discount, nq, nr, na, nl, para_est)
+# twobox_est.setupMDP()
+# twobox_est.solveMDP_sfm()
+# ThA = twobox_est.ThA
+# policy = twobox_est.softpolicy
+# pi = np.ones(nq * nq)/ nq /nq  # initialize the estimation of the belief state
+# twoboxHMM_est = HMMtwobox(ThA, policy, pi)
+#
+# alpha_est, scale_est = twoboxHMM_est.forward_scale(obs)
+# beta_est = twoboxHMM_est.backward_scale(obs, scale_est)
+# gamma_est = twoboxHMM_est.compute_gamma(alpha_est, beta_est)
+# xi_est = twoboxHMM_est.compute_xi(alpha_est, beta_est, obs)
+#
+# #lat_compound = nq * lat[:, 0] + lat[:, 1]
+#
+# fig, ax = plt.subplots(figsize= (20, 10))
+# plt.imshow(gamma_est[:, showT], interpolation='Nearest', cmap='gray')
+# #plt.plot(lat_compound[showT], color = 'r',marker ='.', markersize = 15)
+# plt.xticks(np.arange(0, showlen, 10))
+# plt.xlabel('time')
+# plt.ylabel('belief state')
+# plt.show()
+#
+# belief1_est = np.sum(np.reshape(gamma_est[:, showT].T, (showlen, nq, nq)), axis = 2)
+# belief2_est = np.sum(np.reshape(gamma_est[:, showT].T, (showlen, nq, nq)), axis = 1)
+#
+# fig = plt.figure(figsize= (20, 4))
+# ax1 = fig.add_subplot(211)
+# ax1.imshow(belief1_est.T, interpolation='Nearest', cmap='gray')
+# ax1.set(title = 'belief of box 1 based on estimated parameters')
+# ax2 = fig.add_subplot(212)
+# ax2.imshow(belief2_est.T, interpolation='Nearest', cmap='gray')
+# ax2.set(title = 'belief of box 2 based on estimated parameters')
+# plt.show()
 
 
 print('hello')

@@ -116,9 +116,9 @@ def main():
     # parameters = [gamma1, gamma2, epsilon1, epsilon2, groom, travelCost, pushButtonCost]
     # parametersExp = [gamma1, gamma2, epsilon1, epsilon2]
     #parametersAgent = np.array(list(map(float, sys.argv[1].strip('[]').split(','))))
-    parametersAgent = np.array([0.3,0.3,0.1,0.1,0.05,0.2,0.3])
+    parametersAgent = np.array([0.3,0.3,0.0,0.0,0.05,0.2,0.3])
     #parametersExp = np.array(list(map(float, sys.argv[2].strip('[]').split(','))))
-    parametersExp = np.array([0.2,0.3,0.05,0.03])
+    parametersExp = np.array([0.2,0.3,0.0,0.0])
 
     obsN, latN, truthN, datestring = twoboxGenerate(parametersAgent, parametersExp, sample_length = 5000, sample_number = 1, nq = 5)
 

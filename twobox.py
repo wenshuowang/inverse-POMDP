@@ -938,21 +938,21 @@ class twoboxMDPder(twoboxMDP):
         Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
         dQauxdpara_gamma2 = (Qaux1 - Qaux) / perturb
 
-        para1 = [gamma1, gamma2 , epsilon1+ perturb, epsilon2, Groom,
-                 travelCost, pushButtonCost]
-        two1 = twoboxMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
-        two1.setupMDP()
-        two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
-        dQauxdpara_epsilon1 = (Qaux1 - Qaux) / perturb
-
-        para1 = [gamma1, gamma2 , epsilon1, epsilon2+ perturb, Groom,
-                 travelCost, pushButtonCost]
-        two1 = twoboxMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
-        two1.setupMDP()
-        two1.solveMDP_sfm()
-        Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
-        dQauxdpara_epsilon2 = (Qaux1 - Qaux) / perturb
+        # para1 = [gamma1, gamma2 , epsilon1+ perturb, epsilon2, Groom,
+        #          travelCost, pushButtonCost]
+        # two1 = twoboxMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
+        # two1.setupMDP()
+        # two1.solveMDP_sfm()
+        # Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        # dQauxdpara_epsilon1 = (Qaux1 - Qaux) / perturb
+        #
+        # para1 = [gamma1, gamma2 , epsilon1, epsilon2+ perturb, Groom,
+        #          travelCost, pushButtonCost]
+        # two1 = twoboxMDP(self.discount, self.nq, self.nr, self.na, self.nl, para1)
+        # two1.setupMDP()
+        # two1.solveMDP_sfm()
+        # Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
+        # dQauxdpara_epsilon2 = (Qaux1 - Qaux) / perturb
 
         para1 = [gamma1, gamma2, epsilon1, epsilon2, Groom + perturb,
                  travelCost , pushButtonCost]
@@ -978,5 +978,8 @@ class twoboxMDPder(twoboxMDP):
         Qaux1 = twoboxHMM.computeQaux(obs, two1.ThA, two1.softpolicy)
         dQauxdpara_pushButtonCost = (Qaux1 - Qaux) / perturb
 
-        return dQauxdpara_gamma1, dQauxdpara_gamma2, dQauxdpara_epsilon1, dQauxdpara_epsilon2, \
+        #return dQauxdpara_gamma1, dQauxdpara_gamma2, dQauxdpara_epsilon1, dQauxdpara_epsilon2, \
+        #       dQauxdpara_Groom, dQauxdpara_travelCost, dQauxdpara_pushButtonCost
+
+        return dQauxdpara_gamma1, dQauxdpara_gamma2, 0, 0, \
                dQauxdpara_Groom, dQauxdpara_travelCost, dQauxdpara_pushButtonCost
