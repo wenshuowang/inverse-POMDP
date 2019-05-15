@@ -9,7 +9,7 @@ path = os.getcwd()
 E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.01   # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -2                  # stopping criteria of E-step
-M_LR_INI = 2  * 10 ** -5           # initial learning rate in the gradient descent step
+M_LR_INI = 5  * 10 ** -5           # initial learning rate in the gradient descent step
 LR_DEC =  4                       # number of times that the learning rate can be reduced
 SaveEvery = 10
 
@@ -360,12 +360,18 @@ def main():
                 print(complete_likelihood_new)
                 print(log_likelihood)
 
+                gra_sqrt = 0
+
                 while True:
 
                     derivative_value = twoboxColGra.dQauxdpara_sim(obs, parameters_new)
                     print(derivative_value)
                     # vinitial is value from previous iteration, this is for computational efficiency
                     para_temp = parameters_new + learnrate * np.array(derivative_value)
+                    #gra_sqrt = np.sqrt(0.9 * np.square(derivative_value) + 0.1 * gra_sqrt + 10 ** (-6))
+                    #para_temp = parameters_new + learnrate * np.array(derivative_value) / gra_sqrt
+                    #print(np.array(derivative_value) / gra_sqrt)
+                    #para_temp[-3] = 5
                     # vinitial = derivative_value[-1]  # value iteration starts with value from previous iteration
 
                     ## Check the ECDLL (old posterior, new parameters)
