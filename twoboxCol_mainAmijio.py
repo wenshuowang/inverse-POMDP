@@ -9,7 +9,7 @@ path = os.getcwd()
 E_MAX_ITER = 300       # 100    # maximum number of iterations of E-step
 GD_THRESHOLD = 0.01   # 0.01      # stopping criteria of M-step (gradient descent)
 E_EPS = 10 ** -2                  # stopping criteria of E-step
-M_LR_INI = 5  * 10 ** -5           # initial learning rate in the gradient descent step
+M_LR_INI = 4 * 10 ** -4           # initial learning rate in the gradient descent step
 LR_DEC =  4                       # number of times that the learning rate can be reduced
 SaveEvery = 10
 
@@ -331,7 +331,9 @@ def main():
                 print(log_likelihood)
 
                 ## Check convergence
-
+                if len(log_likelihoods_old) >= 2 and np.abs(log_likelihood - log_likelihoods_old[-2]) < eps:
+                    print("EM has converged!")
+                    break
 
                 ##########  M(G)-step ##########
                 M_thresh = GD_THRESHOLD
@@ -358,18 +360,20 @@ def main():
                 print(complete_likelihood_new)
                 print(log_likelihood)
 
-                gra_sqrt = 0
 
                 while True:
+
+                    ## Use Armijio rule to decide the step-size
+                    alpha = 1
 
                     derivative_value = twoboxColGra.dQauxdpara_sim(obs, parameters_new)
                     print(derivative_value)
                     # vinitial is value from previous iteration, this is for computational efficiency
-                    para_temp = parameters_new + learnrate * np.array(derivative_value)
-                    #gra_sqrt = np.sqrt(0.9 * np.square(derivative_value) + 0.1 * gra_sqrt + 10 ** (-6))
-                    #para_temp = parameters_new + learnrate * np.array(derivative_value) / gra_sqrt
-                    #print(np.array(derivative_value) / gra_sqrt)
-                    #para_temp[-3] = 5
+                    para_temp = parameters_new + alpha * learnrate * np.array(derivative_value)
+                    # gra_sqrt = np.sqrt(0.9 * np.square(derivative_value) + 0.1 * gra_sqrt + 10 ** (-6))
+                    # para_temp = parameters_new + learnrate * np.array(derivative_value) / gra_sqrt
+                    # print(np.array(derivative_value) / gra_sqrt)
+                    # para_temp[-3] = 5
                     # vinitial = derivative_value[-1]  # value iteration starts with value from previous iteration
 
                     ## Check the ECDLL (old posterior, new parameters)
@@ -381,36 +385,59 @@ def main():
                     Trans_hybrid_obs12_new = twoboxCol_new.Trans_hybrid_obs12
                     Obs_emis_trans1_new = twoboxCol_new.Obs_emis_trans1
                     Obs_emis_trans2_new = twoboxCol_new.Obs_emis_trans2
-                    complete_likelihood_new_temp = twoColHMM.computeQaux(obs, ThA_new,softpolicy_new, Trans_hybrid_obs12_new,
+                    complete_likelihood_new_temp = twoColHMM.computeQaux(obs, ThA_new, softpolicy_new,
+                                                                         Trans_hybrid_obs12_new,
                                                                          Obs_emis_trans1_new, Obs_emis_trans2_new)
 
-                    print("         ", para_temp)
-                    print("         ", complete_likelihood_new_temp)
+                    min_cll_temp = complete_likelihood_new_temp
 
-                    ## Update the parameter if the ECDLL can be improved
-                    if complete_likelihood_new_temp > complete_likelihood_new + M_thresh:
-                        parameters_new = np.copy(para_temp)
-                        complete_likelihood_new = complete_likelihood_new_temp
-                        log_likelihood = complete_likelihood_new + latent_entropy
+                    while complete_likelihood_new_temp < complete_likelihood_new + 0.5 * alpha * learnrate * \
+                            np.array(derivative_value).dot(np.array(derivative_value)):
+                        alpha /= 8
+                        para_temp = parameters_new + alpha * learnrate * np.array(derivative_value)
 
-                        para_new_traj[count_E].append(parameters_new)
-                        log_likelihoods_com_new[count_E].append(complete_likelihood_new)
-                        log_likelihoods_new[count_E].append(log_likelihood)
+                        ## Check the ECDLL (old posterior, new parameters)
+                        twoboxCol_new = twoboxColMDP(discount, nq, nr, na, nl, para_temp)
+                        twoboxCol_new.setupMDP()
+                        twoboxCol_new.solveMDP_sfm()
+                        ThA_new = twoboxCol_new.ThA
+                        softpolicy_new = twoboxCol_new.softpolicy
+                        Trans_hybrid_obs12_new = twoboxCol_new.Trans_hybrid_obs12
+                        Obs_emis_trans1_new = twoboxCol_new.Obs_emis_trans1
+                        Obs_emis_trans2_new = twoboxCol_new.Obs_emis_trans2
+                        complete_likelihood_new_temp = twoColHMM.computeQaux(obs, ThA_new, softpolicy_new,
+                                                                             Trans_hybrid_obs12_new,
+                                                                             Obs_emis_trans1_new, Obs_emis_trans2_new)
 
-                        print('\n', parameters_new)
-                        print(complete_likelihood_new)
-                        print(log_likelihood)
+                        print('complete_likelihood_new_temp: ', complete_likelihood_new_temp, '  (alpha = ', alpha, ')')
 
-                        count_M += 1
 
-                        # if count_M == 10 :
-                        #    M_thresh = M_thresh / 4
-                    else:
-                        learnrate /= 2
-                        if learnrate < learnrate_ini / (2 ** LR_DEC):
+                        if alpha < 10** -6 or complete_likelihood_new_temp < min_cll_temp:
                             break
 
-                # every 50 iterations, download data
+                        min_cll_temp = complete_likelihood_new_temp
+
+                    ## Update the parameter if the ECDLL can be improved
+                    parameters_new = np.copy(para_temp)
+                    complete_likelihood_new = complete_likelihood_new_temp
+                    log_likelihood = complete_likelihood_new + latent_entropy
+
+                    para_new_traj[count_E].append(parameters_new)
+                    log_likelihoods_com_new[count_E].append(complete_likelihood_new)
+                    log_likelihoods_new[count_E].append(log_likelihood)
+
+                    print('\n', parameters_new)
+                    print(complete_likelihood_new)
+                    print(log_likelihood)
+
+                    count_M += 1
+
+                    if len(log_likelihoods_new[count_E]) >= 2 and np.abs(log_likelihood - log_likelihoods_new[count_E][-2]) < eps:
+                        print("M-step finish")
+                        break
+
+
+                # every SaveEvery iterations, download data
                 if (count_E + 1) % SaveEvery == 0:
                     Experiment_dict = {'ParameterTrajectory_Estep': para_old_traj,
                                        'ParameterTrajectory_Mstep': para_new_traj,
