@@ -7,11 +7,11 @@ from datetime import datetime
 import os
 
 
-E_MAX_ITER = 200 # 100    # maximum number of iterations of E-step
-GD_THRESHOLD = 0.01 # 0.01      # stopping criteria of M-step (gradient descent)
-E_EPS = 10 ** -6                  # stopping criteria of E-step
-M_LR_INI = 8 * 10 ** -6           # initial learning rate in the gradient descent step
-LR_DEC =  4                       # number of times that the learning rate can be reduced
+# E_MAX_ITER = 200 # 100    # maximum number of iterations of E-step
+# GD_THRESHOLD = 0.01 # 0.01      # stopping criteria of M-step (gradient descent)
+# E_EPS = 10 ** -6                  # stopping criteria of E-step
+# M_LR_INI = 8 * 10 ** -6           # initial learning rate in the gradient descent step
+# LR_DEC =  4                       # number of times that the learning rate can be reduced
 
 def oneboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, nr = 2, na = 2, discount = 0.99):
     #datestring = datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M-%S')
