@@ -28,6 +28,9 @@ def oneboxGenerate(parameters, parametersExp, sample_length, sample_number, nq, 
     epsilon_e = parametersExp[1]
     #parameters = [beta, gamma, epsilon, rho, pushButtonCost]
 
+    switching_active_to_lapse = parameters[5]
+    switching_lapse_to_active = parameters[6]
+
     ### Gnerate data"""
     print("\nGenerating data...")
     T = sample_length
